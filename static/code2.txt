@@ -1,0 +1,167 @@
+
+# from selenium import webdriver
+# import time
+# def main()
+#     b=webdriver.Chrome()
+#     b.get('httpwww.baidu.com')
+#     time.sleep(5)
+#     b.quit()
+# if __name__ == '__main__'
+#     main()
+
+# import time
+# from selenium import webdriver
+# driver=webdriver.Chrome()
+# driver.get('httpwww.baidu.com')
+# driver.find_element_by_id(kw).send_keys('大道至简')
+# time.sleep(3)
+# driver.quit()
+
+# 通过find_element_by_id()定位
+
+# import time
+# from selenium import webdriver
+# driver=webdriver.Chrome()
+# driver.get('httpwww.baidu.com')
+# driver.find_element_by_name(wd).send_keys('大道至简')
+# time.sleep(3)
+# driver.quit()
+
+#
+
+# import time
+# from selenium import webdriver
+# driver=webdriver.Chrome()
+# driver.get('httpwww.baidu.com')
+# driver.find_element_by_xpath(input[@id='kw' and @name='wd']).send_keys('mgqimiao')
+# time.sleep(3)
+# driver.quit()
+# Xpath 定位
+
+# import time
+# from selenium import webdriver
+# driver=webdriver.Chrome()
+# driver.get('httpwww.baidu.com')
+# driver.find_element_by_xpath(form[@id='form']spaninput).send_keys('mgqimiao')
+# time.sleep(3)
+# driver.quit()
+# Xpath 父节点id定位
+
+# import time
+# from selenium import webdriver
+# driver=webdriver.Chrome()
+# driver.get('httpwww.baidu.com')
+# driver.find_element_by_xpath(form[@name='f']spaninput).send_keys('mgqimiao')
+# time.sleep(3)
+# driver.quit()
+# # Xpath 父节点name定位
+
+# import time
+# from selenium import webdriver
+# driver=webdriver.Chrome()
+# driver.get('httpwww.baidu.com')
+# driver.find_element_by_name('tj_trnews').click()
+#  time.sleep(3)
+#  driver.quit()
+# name 定位页面新闻
+
+# import time
+# from selenium import webdriver
+# driver=webdriver.Chrome()
+# driver.get('httpwww.baidu.com')
+# driver.find_element_by_xpath(a[@name='tj_login' and @class='lb']).click()
+# time.sleep(3)
+# driver.quit()
+
+
+# import time
+# from selenium import webdriver
+# driver=webdriver.Chrome()
+# driver.get('httpwww.baidu.com')
+# driver.search_jq = $('input#kw.s_ipt').val('selenium')
+# time.sleep(3)
+# driver.quit()
+# 实验中
+
+# import time
+# from selenium import webdriver
+# driver=webdriver.Chrome()
+# driver.get('httpwww.baidu.com')
+# driver.find_element_by_css_selector(form.fmspaninput).send_keys('sss')
+# time.sleep(3)
+# driver.quit()
+
+# import time
+# from selenium import webdriver
+# driver=webdriver.Chrome()
+# driver.get('file'+ os.path.abspath('checkbox.html'))
+# driver.find_element_by_css_selector(input[type='checkbox'])[0].click()
+# time.sleep(3)
+# driver.
+
+# 导入库
+import time
+import requests
+from lxml import etree
+header ={ 'User-Agent''Mozilla5.0 (Windows NT 10.0; WOW64) AppleWebKit537.36 (KHTML, like Gecko) Chrome50.0.2661.102 UBrowser5.7.16400.12 Safari537.36','Cookie''track_id=125644147453042688; antipas=63634zU577Q06y28j42580015HY91; ganji_uuid=4554008729955476188493; close_finance_popup=2020-09-26; clueSourceCode=%2A%2300; user_city_id=24; preTime=%7B%22last%22%3A1601111106%2C%22this%22%3A1601111099%2C%22pre%22%3A1601111099%7D; uuid=3f352e24-2fdb-424c-8127-1c4323caea97; lg=1; cityDomain=dg; cainfo=%7B%22ca_a%22%3A%22-%22%2C%22ca_b%22%3A%22-%22%2C%22ca_s%22%3A%22pz_baidu%22%2C%22ca_n%22%3A%22pcbiaoti%22%2C%22ca_medium%22%3A%22-%22%2C%22ca_term%22%3A%22-%22%2C%22ca_content%22%3A%22%22%2C%22ca_campaign%22%3A%22%22%2C%22ca_kw%22%3A%22-%22%2C%22ca_i%22%3A%22-%22%2C%22scode%22%3A%22-%22%2C%22keyword%22%3A%22-%22%2C%22ca_keywordid%22%3A%22-%22%2C%22ca_transid%22%3A%22%22%2C%22platform%22%3A%221%22%2C%22version%22%3A1%2C%22track_id%22%3A%22125644147453042688%22%2C%22display_finance_flag%22%3A%22-%22%2C%22client_ab%22%3A%22-%22%2C%22guid%22%3A%223f352e24-2fdb-424c-8127-1c4323caea97%22%2C%22ca_city%22%3A%22dg%22%2C%22sessionid%22%3A%22d5c6caa1-d08b-4391-fdaa-ff2b18a44956%22%7D; sessionid=d5c6caa1-d08b-4391-fdaa-ff2b18a44956'}
+
+url ='httpswww.guazi.comszbuy'
+resq = requests.get(url, headers=header)
+text = resq.content.decode('utf-8')
+html = etree.HTML(text)
+# print(text)
+#获取详情界面的url
+def get_detail_urls(url)
+    ul = html.xpath('ul[@class=carlist clearfix js-top]')[0]
+    print(ul)
+    lis = ul.xpath('.li')
+    detail_urls = []
+    for li in lis
+        detail_url = li.xpath('.a@href')
+        detail_url = 'httpswww.guazi.com' + detail_url[0]
+        detail_urls.append(detail_url)
+    return detail_urls
+
+#解析详情页面url
+
+detail_urls = get_detail_urls(url)
+#解析详情页面内容
+def get_detail_infos(detail_url)
+        resq = requests.get(detail_url,headers=header)
+        text = resq.content.decode('utf-8')
+        html = etree.HTML(text)
+        title = html.xpath('div[@class=product-textbox]h2text()')[0]
+        title =title.replace(r'rn','').strip()#去除前后空格
+        # print(title)
+        info = html.xpath('div[@class=product-textbox]ullispantext()')
+        cardtime =info[1]
+        km =info[2]
+        dispartment =info[3]
+        speedbox =info[4]
+        # print(info[0]+info[1]+info[2]+info[3]+info[4])
+        infos={}
+        infos['title']=title
+        infos['cardtime']=cardtime
+        infos['km']=km
+        infos['dispartment']=dispartment
+        infos['speedbox']=speedbox
+        # print(infos)
+        return infos
+
+def save_data(infos,f)
+
+        f.write('{},{},{},{}n'.format(infos['title'],infos['km'],infos['dispartment'],infos['speedbox']))
+
+#保存文件
+def main()
+    url ='httpswww.guazi.comszbuy'
+    with open('guazi_cs.csv','a',encoding='utf-8') as  f
+        f.write('{},{},{},{}n'.format('标题','公里数','排量','变速箱'))
+        detail_urls = get_detail_urls(url)
+        for detail_url in detail_urls
+            infos = get_detail_infos(detail_url)
+            save_data(infos,f)
+
+if __name__ == '__main__'
+    main()
+

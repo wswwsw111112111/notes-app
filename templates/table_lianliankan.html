@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <link rel="stylesheet" href="{{ url_for('static',filename='css/style.css',_external=True)}}"/>
+{#    #"static/css/style.css"#}
+
+</head>
+<body>
+        <form action="/login.do" method="post">
+            <table>
+                <span color = 'red'>{{ message}}</span>
+                <tr>
+                    <td> 用户名：</td>><td><input type="text" name="userName"/></td>
+                </tr>
+                 <tr>
+                    <td>密码：</td>><td><input type="password" name="userPwd"/></td>
+                </tr>
+                 <tr>
+                     <td></td>
+                     <td>
+                         <input type="reset" value="重置">
+                         <input type="submit" value="提交">
+                     </td>
+                </tr>
+
+            </table>
+
+        </form>
+
+</body>
+</html>

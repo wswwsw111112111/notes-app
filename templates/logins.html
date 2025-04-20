@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script src="https://cdn.bootcdn.net/ajax/libs/blueimp-md5/2.18.0/js/md5.min.js"></script>
+</head>
+<body>
+    <form action="/denglu" method="post">
+        <p>
+            <span>用户名：</span><input type="text" value="user" name="username" id="userame">
+        </p>
+        <p>
+            <span>密码：</span><input type="password" name="password" id="password">
+        </p>
+        <button>点击登录</button>
+    </form>
+    <hr>
+    <form action="/show">
+        姓名<input type="text" name="n"/>
+        <button>点击提交</button>
+    </form>
+    <script>
+        // 通过check()拦截表单提交，经过MD5加密后在进行提交
+        var check = function(){
+            var name = document.getElementById("username");
+            var password = document.getElementById("password");
+            console.log(password.value)
+            password.value = md5(password.value);
+            console.log(password.value)
+            return true;
+        }
+    </script>
+</body>
+</html>

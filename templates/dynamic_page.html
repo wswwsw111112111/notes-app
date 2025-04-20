@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>动态页面示例</title>
+    <style>
+        body { font-family: sans-serif; }
+        .highlight { color: blue; }
+        .special { background-color: yellow; padding: 5px;}
+    </style>
+</head>
+<body>
+
+    <h1>你好, <span class="highlight">{{ name }}</span>!</h1>
+
+    {# 这是一个 Jinja2 注释，不会出现在最终的 HTML 中 #}
+
+    <p>当前服务器时间是: {{ time.strftime('%Y-%m-%d %H:%M:%S') }}</p>
+    {# 注意：可以直接在模板中调用 Python 对象的方法，比如 time.strftime #}
+
+    <h2>物品列表:</h2>
+    {% if items %} {# 判断 items 列表是否存在且不为空 #}
+        <ul>
+            {% for item in items %} {# 遍历 items 列表 #}
+                <li>这是第 {{ loop.index }} 项: {{ item }}</li> {# loop.index 是循环计数器 #}
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>列表为空。</p>
+    {% endif %}
+
+
+    {% if show_message %} {# 根据布尔值决定是否显示某段内容 #}
+        <p class="special">这是一个特殊消息！</p>
+    {% endif %}
+
+    <p>
+        <a href="/">返回首页</a>
+        <br>
+        <a href="{{ url_for('show_user_profile', username='Alice') }}">查看 Alice 的资料</a>
+        {# url_for 是一个很有用的函数，可以根据路由函数名生成 URL #}
+    </p>
+
+</body>
+</html>
