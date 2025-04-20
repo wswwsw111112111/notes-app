@@ -22,6 +22,7 @@ os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 # 添加最大上传限制
 app.config['MAX_CONTENT_LENGTH'] = 200 * 1024 * 1024  # 200MB
 #313232
+#备注
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 csrf = CSRFProtect(app)
