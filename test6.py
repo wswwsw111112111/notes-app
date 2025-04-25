@@ -8,33 +8,53 @@ from flask_wtf.csrf import CSRFProtect
 import os
 import base64
 import hashlib
+import uuid
+import shutil
+from pathlib import Path
 from flask_migrate import Migrate
+from flask import Flask, render_template, request, jsonify, session, redirect, url_for, send_from_directory
+from flask_sqlalchemy import SQLAlchemy
+from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
+from werkzeug.security import generate_password_hash, check_password_hash
+from datetime import datetime, timezone
+import os
+import hashlib
+import base64
+from functools import wraps
+import zipfile
+import shutil
+from werkzeug.utils import secure_filename
+import json
+
+
+
+
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'your-secret-key'  # 确保 SECRET_KEY 是唯一的
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///notes_app.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['UPLOAD_FOLDER'] = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'Uploads')
+app.config['TEMP_CHUNK_DIR'] = os.path.join(app.config['UPLOAD_FOLDER'], 'temp_chunks')
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=2)
 app.config['SESSION_PERMANENT'] = True  # 确保会话是永久的
 app.config['SESSION_TYPE'] = 'filesystem'  # 使用文件系统存储会话
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+os.makedirs(app.config['TEMP_CHUNK_DIR'], exist_ok=True)
 # 添加最大上传限制
 app.config['MAX_CONTENT_LENGTH'] = 200 * 1024 * 1024  # 200MB
-#313232
-#备注12355456
-#备注21:14
+# 允许上传的文件类型
+ALLOWED_EXTENSIONS = {'.png', '.jpg', '.jpeg', '.gif', '.pdf', '.txt', '.doc', '.docx','.exe','.xls','.xlsx','.zip','.mp4','.msi','.tgz','.wps','.tar'}
+
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 csrf = CSRFProtect(app)
-
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
     password_hash = db.Column(db.String(128), nullable=False)
     notes = db.relationship('Note', backref='user', lazy=True)
-
 
 class Note(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -58,14 +78,14 @@ def login_required(f):
         print(f"Session active: user_id={session['user_id']}, username={session.get('username')}")
         session.modified = True
         return f(*args, **kwargs)
-
     return decorated_function
 
+def allowed_file(filename):
+    return Path(filename).suffix.lower() in ALLOWED_EXTENSIONS
 
 @app.route('/')
 def index():
     return redirect(url_for('login'))
-
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -86,7 +106,6 @@ def login():
             return redirect(url_for('login'))
     return render_template('login.html')
 
-
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
@@ -105,7 +124,6 @@ def register():
         return redirect(url_for('login'))
     return render_template('register.html')
 
-
 @app.route('/logout')
 @login_required
 def logout():
@@ -113,18 +131,18 @@ def logout():
     print("Logout successful: Session cleared.")
     return redirect(url_for('login'))
 
-
 @app.route('/notes')
+@app.route('/notes/<int:page>')
 @login_required
-def notes_page():
+def notes_page(page=1):
+    per_page = 20  # 每页 20 条
     user_id = session['user_id']
-    user_notes = Note.query.filter_by(user_id=user_id).order_by(Note.timestamp.asc()).all()
-    print(f"Notes page loaded: user_id={user_id}, number of notes={len(user_notes)}")
+    pagination = Note.query.filter_by(user_id=user_id).order_by(Note.timestamp.asc()).paginate(page=page, per_page=per_page, error_out=False)
+    user_notes = pagination.items
+    print(f"Notes page loaded: user_id={user_id}, page={page}, number of notes={len(user_notes)}")
     for note in user_notes:
-        print(
-            f"Note ID: {note.id}, Type: {note.content_type}, Content: {note.content_data}, Timestamp: {note.timestamp}")
-    return render_template('notes.html', notes=user_notes, username=session.get('username'))
-
+        print(f"Note ID: {note.id}, Type: {note.content_type}, Content: {note.content_data}, Timestamp: {note.timestamp}")
+    return render_template('notes.html', notes=user_notes, username=session.get('username'), pagination=pagination)
 
 @app.route('/notes/add', methods=['POST'])
 @login_required
@@ -181,8 +199,7 @@ def add_note():
             'note': {
                 'id': new_note.id,
                 'type': new_note.content_type,
-                'content': new_note.content_data if note_type == 'text' else url_for('uploaded_file',
-                                                                                     filename=new_note.content_data),
+                'content': new_note.content_data if note_type == 'text' else url_for('uploaded_file', filename=new_note.content_data),
                 'raw_content': new_note.raw_content,
                 'timestamp': new_note.timestamp.isoformat(),
                 'file_size': new_note.file_size,
@@ -194,6 +211,79 @@ def add_note():
         print(f"Add note failed: Database error - {str(e)}")
         return jsonify({'success': False, 'error': f'数据库错误: {str(e)}'}), 500
 
+@app.route('/notes/upload_chunk', methods=['POST'])
+@login_required
+def upload_chunk():
+    user_id = session['user_id']
+    chunk = request.files.get('chunk')
+    filename = request.form.get('filename')
+    chunk_index = int(request.form.get('chunkIndex'))
+    total_chunks = int(request.form.get('totalChunks'))
+    chunk_id = request.form.get('chunkId')
+
+    if not chunk or not filename or not chunk_id:
+        return jsonify({'success': False, 'error': '缺少必要参数'}), 400
+
+    if not allowed_file(filename):
+        return jsonify({'success': False, 'error': '不支持的文件类型'}), 400
+
+    # 临时存储分片的目录
+    chunk_dir = os.path.join(app.config['TEMP_CHUNK_DIR'], chunk_id)
+    os.makedirs(chunk_dir, exist_ok=True)
+    chunk_path = os.path.join(chunk_dir, f'chunk-{chunk_index}')
+    chunk.save(chunk_path)
+
+    # 如果是最后一个分片，合并文件
+    if chunk_index == total_chunks - 1:
+        safe_filename = secure_filename(filename)
+        final_path = os.path.join(app.config['UPLOAD_FOLDER'], safe_filename)
+        with open(final_path, 'wb') as f:
+            for i in range(total_chunks):
+                chunk_file = os.path.join(chunk_dir, f'chunk-{i}')
+                with open(chunk_file, 'rb') as cf:
+                    f.write(cf.read())
+        # 计算 MD5
+        with open(final_path, 'rb') as f:
+            file_data = f.read()
+            md5_hash = hashlib.md5(file_data).hexdigest()
+
+        # 检查是否重复
+        existing_note = Note.query.filter_by(user_id=user_id, md5=md5_hash).first()
+        if existing_note:
+            shutil.rmtree(chunk_dir)
+            return jsonify({'success': False, 'error': '文件已存在，无需重复上传'}), 409
+
+        # 保存到数据库
+        content_type = 'image' if filename.lower().endswith(('.png', '.jpg', '.jpeg', '.gif')) else 'file'
+        new_note = Note(
+            user_id=user_id,
+            content_type=content_type,
+            content_data=safe_filename,
+            raw_content=filename,
+            file_size=len(file_data),
+            md5=md5_hash,
+            timestamp=datetime.now(timezone.utc)
+        )
+        db.session.add(new_note)
+        db.session.commit()
+
+        # 清理临时文件
+        shutil.rmtree(chunk_dir)
+
+        return jsonify({
+            'success': True,
+            'note': {
+                'id': new_note.id,
+                'type': new_note.content_type,
+                'content': url_for('uploaded_file', filename=new_note.content_data),
+                'raw_content': new_note.raw_content,
+                'timestamp': new_note.timestamp.isoformat(),
+                'file_size': new_note.file_size,
+                'md5': new_note.md5
+            }
+        })
+
+    return jsonify({'success': True, 'message': '分片上传成功'})
 
 @app.route('/notes/edit/<int:note_id>', methods=['POST'])
 @login_required
@@ -226,7 +316,6 @@ def edit_note(note_id):
         print(f"Edit note failed: Database error - {str(e)}")
         return jsonify({'success': False, 'error': f'数据库错误: {str(e)}'}), 500
 
-
 @app.route('/notes/delete/<int:note_id>', methods=['POST'])
 @login_required
 def delete_note(note_id):
@@ -250,14 +339,12 @@ def delete_note(note_id):
         print(f"Delete note failed: Database error - {str(e)}")
         return jsonify({'success': False, 'error': f'数据库错误: {str(e)}'}), 500
 
-
 @app.route('/uploads/<filename>')
 def uploaded_file(filename):
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
-
 
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
         print("Database tables checked/created.")
-
+    app.run(debug=True, host='0.0.0.0', port=5000)

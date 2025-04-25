@@ -3,128 +3,202 @@
 
 {% block content %}
 <style>
+@media (max-width: 768px) {
     .notes-container {
-        display: flex;
-        flex-direction: column;
-        height: calc(100vh - 150px);
-        position: relative;
+        height: calc(100vh - 200px);
     }
-    .notes-display {
-        flex-grow: 1;
-        overflow-y: auto;
-        padding: 15px;
-        border-bottom: 1px solid #ccc;
-        background-color: #f9f9f9;
-        margin-bottom: 10px;
-    }
-    .input-area {
-        min-height: 80px;
-        max-height: 200px;
-        padding: 10px;
-        border: 1px solid #ccc;
-        overflow-y: auto;
-        outline: none;
-        flex-shrink: 0;
-        font-size: 1em;
-        line-height: 1.4;
-        background-color: #fff;
-        position: relative;
-        margin-bottom: 10vh;
-        box-sizing: border-box;
-    }
-    .upload-btn {
-        position: absolute;
-        bottom: calc(10vh + 10px);
-        right: 10px;
-        font-size: 1.2em;
-        cursor: pointer;
-        z-index: 10;
-    }
-    .note-entry { margin-bottom: 12px; padding: 10px; background-color: #fff; border-radius: 5px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); position: relative; }
-    .note-entry .timestamp { font-size: 0.8em; color: #888; display: block; margin-bottom: 5px; }
-    .note-entry .note-content { margin-bottom: 5px; }
     .note-entry .note-content img {
-        max-width: 300px;
-        max-height: 300px;
-        display: block;
-        margin-top: 5px;
-        border-radius: 4px;
-        cursor: pointer;
+        max-width: 100%;
     }
-    .note-entry .note-content a { color: #007bff; text-decoration: underline; }
-    .note-entry .note-content p { margin: 0; white-space: pre-wrap; word-wrap: break-word; }
-    .note-actions { position: absolute; top: 5px; right: 10px; display: none; }
-    .note-entry:hover .note-actions { display: inline-block; }
-    .note-actions button { background: none; border: none; cursor: pointer; padding: 2px 5px; font-size: 0.9em; margin-left: 5px; }
-    .note-actions .btn-edit { color: blue; }
-    .note-actions .btn-delete { color: red; }
-    .note-actions .btn-save, .note-actions .btn-cancel { font-size: 0.8em; display: none; }
-    .input-area:empty::before { content: "在此输入笔记内容，可直接粘贴图片或点击加号上传文件..."; color: #aaa; }
-    .input-area img { max-width: 100px; max-height: 100px; vertical-align: middle; margin: 2px; }
-    .editing .note-content p { display: none; }
-    .editing textarea { width: 100%; min-height: 60px; display: block; margin-bottom: 5px; box-sizing: border-box; }
-    .editing .btn-edit, .editing .btn-delete { display: none; }
-    .editing .btn-save, .editing .btn-cancel { display: inline-block; }
-    .modal {
-        display: none;
-        position: fixed;
-        z-index: 1000;
-        left: 0;
-        top: 0;
+    .gallery img {
+        flex: 0 0 100%;
         width: 100%;
-        height: 100%;
-        background-color: rgba(0, 0, 0, 0.8);
-        overflow: auto;
     }
-    .modal-content {
-        position: relative;
-        margin: 5% auto;
-        padding: 20px;
-        width: 80%;
-        max-width: 90%;
-        max-height: 90%;
-        text-align: center;
-    }
-    .modal-content img {
-        width: 100%;
-        height: auto;
-        max-height: 80vh;
-        object-fit: contain;
-        transition: transform 0.2s;
-    }
-    .modal-controls {
-        position: absolute;
-        top: 10px;
-        right: 20px;
-    }
-    .modal-controls button {
-        background: #fff;
-        border: none;
-        padding: 5px 10px;
-        margin: 0 5px;
-        cursor: pointer;
-        font-size: 1.2em;
-        border-radius: 3px;
-    }
-    .close-btn {
-        color: #fff;
-        font-size: 2em;
-        position: absolute;
-        top: 10px;
-        left: 20px;
-        cursor: pointer;
-    }
-    .file-size, .file-md5 {
-        font-size: 0.8em;
-        color: #888;
-        margin-left: 5px;
-    }
-    .no-notes {
-        text-align: center;
-        color: #888;
-        font-style: italic;
-        padding: 20px;
-    }
+}
+
+.notes-container {
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 150px);
+    position: relative;
+}
+.notes-display {
+    flex-grow: 1;
+    overflow-y: auto;
+    padding: 15px;
+    border-bottom: 1px solid #ccc;
+    background-color: #f9f9f9;
+    margin-bottom: 10px;
+}
+.input-area {
+    min-height: 80px;
+    max-height: 200px;
+    padding: 10px;
+    border: 1px solid #ccc;
+    overflow-y: auto;
+    outline: none;
+    flex-shrink: 0;
+    font-size: 1em;
+    line-height: 1.4;
+    background-color: #fff;
+    position: relative;
+    margin-bottom: 10vh;
+    box-sizing: border-box;
+}
+.upload-btn {
+    position: absolute;
+    bottom: calc(10vh + 10px);
+    right: 10px;
+    font-size: 1.2em;
+    cursor: pointer;
+    z-index: 10;
+}
+.note-entry { margin-bottom: 12px; padding: 10px; background-color: #fff; border-radius: 5px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); position: relative; }
+.note-entry .timestamp { font-size: 0.8em; color: #888; display: block; margin-bottom: 5px; }
+.note-entry .note-content { margin-bottom: 5px; }
+.note-entry .note-content img {
+    max-width: 300px;
+    max-height: 300px;
+    display: block;
+    margin-top: 5px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+.note-entry .note-content a { color: #007bff; text-decoration: underline; }
+.note-entry .note-content p { margin: 0; white-space: pre-wrap; word-wrap: break-word; }
+.note-actions { position: absolute; top: 5px; right: 10px; display: none; }
+.note-entry:hover .note-actions { display: inline-block; }
+.note-actions button { background: none; border: none; cursor: pointer; padding: 2px 5px; font-size: 0.9em; margin-left: 5px; }
+.note-actions .btn-edit { color: blue; }
+.note-actions .btn-delete { color: red; }
+.note-actions .btn-save, .note-actions .btn-cancel { font-size: 0.8em; }
+.input-area:empty::before { content: "在此输入笔记内容，可直接粘贴图片或点击加号上传文件..."; color: #aaa; }
+.input-area img { max-width: 100px; max-height: 100px; vertical-align: middle; margin: 2px; }
+.editing .note-content p { display: none; }
+.editing textarea { width: 100%; min-height: 60px; display: block; margin-bottom: 5px; box-sizing: border-box; }
+.editing .btn-edit, .editing .btn-delete { display: none; }
+.editing .btn-save, .editing .btn-cancel { display: inline-block; }
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.8);
+    overflow: visible; /* 允许内容溢出 */
+    justify-content: center;
+    align-items: center;
+}
+.modal-content {
+    position: relative;
+    margin: 0;
+    padding: 0;
+    width: auto;
+    height: auto; /* 移除高度限制 */
+    text-align: center;
+    background: none;
+}
+.modal-content img {
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    transition: transform 0.2s;
+    cursor: grab;
+    user-select: none;
+    touch-action: pinch-zoom;
+}
+.close-btn {
+    color: #fff;
+    font-size: 2em;
+    position: absolute;
+    top: 10px;
+    left: 20px;
+    cursor: pointer;
+}
+.file-size, .file-md5 {
+    font-size: 0.8em;
+    color: #888;
+    margin-left: 5px;
+}
+.no-notes {
+    text-align: center;
+    color: #888;
+    font-style: italic;
+    padding: 20px;
+}
+.upload-progress {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 300px;
+    background-color: #f0f0f0;
+    border-radius: 5px;
+    padding: 5px;
+    display: none;
+    z-index: 1000;
+}
+.upload-progress-bar {
+    height: 20px;
+    background-color: #4caf50;
+    border-radius: 3px;
+    width: 0%;
+    transition: width 0.3s;
+}
+.upload-progress-text {
+    text-align: center;
+    font-size: 0.9em;
+    margin-top: 5px;
+}
+.pagination {
+    text-align: center;
+    padding: 10px;
+}
+.pagination a {
+    margin: 0 5px;
+}
+.upload-options {
+    position: absolute;
+    bottom: calc(10vh + 40px);
+    right: 10px;
+    z-index: 10;
+}
+.gallery-container {
+    position: relative;
+    width: 100%;
+    overflow: hidden;
+}
+.gallery {
+    display: flex;
+    transition: transform 0.3s ease;
+    width: 100%;
+}
+.gallery img {
+    flex: 0 0 33.33%;
+    width: 33.33%;
+    height: auto;
+    object-fit: cover;
+    cursor: pointer;
+}
+.gallery-arrow {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(0, 0, 0, 0.5);
+    color: white;
+    border: none;
+    padding: 10px;
+    cursor: pointer;
+    z-index: 10;
+}
+.arrow-left {
+    left: 0;
+}
+.arrow-right {
+    right: 0;
+}
 </style>
 
 <div class="notes-container">
@@ -138,7 +212,7 @@
             <div class="note-entry" id="note-{{ note.id }}" data-note-id="{{ note.id }}">
                 <span class="timestamp">
                     {{ note.timestamp.strftime('%Y-%m-%d %H:%M:%S UTC') }}
-                    {% if note.content_type in ['image', 'file'] %}
+                    {% if note.content_type in ['image', 'file', 'gallery', 'zip'] %}
                         {% if note.md5 %}
                             <span class="file-md5">MD5: {{ note.md5 }}</span>
                         {% endif %}
@@ -149,11 +223,25 @@
                 </span>
                 <div class="note-content">
                     {% if note.content_type == 'text' %}
-                        <p class="note-text" data-raw-text="{{ note.content_data | e }}"></p>
+                        <p class="note-text" data-raw-text="{{ note.content_data | e }}">{{ note.content_data | urlize | safe }}</p>
                     {% elif note.content_type == 'image' %}
                         <img src="{{ url_for('uploaded_file', filename=note.content_data) }}" alt="笔记图片" data-full-src="{{ url_for('uploaded_file', filename=note.content_data) }}">
-                    {% elif note.content_type == 'file' %}
+                    {% elif note.content_type == 'file' or note.content_type == 'zip' %}
                         <a href="{{ url_for('uploaded_file', filename=note.content_data) }}" target="_blank">{{ note.content_data }}</a>
+                    {% elif note.content_type == 'gallery' %}
+                        <div class="gallery-container" data-images="{{ note.content_data | tojson }}">
+                            <button class="gallery-arrow arrow-left" style="display: none;">←</button>
+                            <div class="gallery">
+                                {% set images = note.content_data %}
+                                {% if images is string %}
+                                    {% set images = images | fromjson %}
+                                {% endif %}
+                                {% for img in images[:3] %}
+                                    <img src="{{ url_for('uploaded_file', filename=img.split('/')[-1]) }}" alt="画廊图片" data-full-src="{{ url_for('uploaded_file', filename=img.split('/')[-1]) }}" loading="lazy">
+                                {% endfor %}
+                            </div>
+                            <button class="gallery-arrow arrow-right" style="{% if images|length <= 3 %}display: none;{% endif %}">→</button>
+                        </div>
                     {% endif %}
                 </div>
                 <div class="note-actions">
@@ -171,20 +259,40 @@
         {% endif %}
     </div>
 
+    {% if pagination %}
+    <div class="pagination">
+        {% if pagination.has_prev %}
+            <a href="{{ url_for('notes_page', page=pagination.prev_num) }}" class="btn btn-secondary">上一页</a>
+        {% endif %}
+        <span>第 {{ pagination.page }} 页 / 共 {{ pagination.pages }} 页</span>
+        {% if pagination.has_next %}
+            <a href="{{ url_for('notes_page', page=pagination.next_num) }}" class="btn btn-secondary">下一页</a>
+        {% endif %}
+    </div>
+    {% endif %}
+
     <div class="input-area" id="noteInput" contenteditable="true">
     </div>
     <span class="upload-btn" title="上传文件">➕</span>
-    <input type="file" id="fileUpload" style="display: none;">
+    <div class="upload-options">
+        <select id="uploadMode">
+            <option value="single">单张上传</option>
+            <option value="gallery">多张图片上传</option>
+            <option value="zip">压缩上传</option>
+        </select>
+    </div>
+    <input type="file" id="fileUpload" style="display: none;" accept=".png,.jpg,.jpeg,.gif,.pdf,.txt,.doc,.docx,.zip,.mp4" multiple>
+</div>
+
+<div class="upload-progress" id="uploadProgress">
+    <div class="upload-progress-bar" id="progressBar"></div>
+    <div class="upload-progress-text" id="progressText">0%</div>
 </div>
 
 <div id="imageModal" class="modal">
     <span class="close-btn" title="关闭">×</span>
     <div class="modal-content">
         <img id="modalImage" src="" alt="图片预览">
-        <div class="modal-controls">
-            <button id="zoomIn">➕</button>
-            <button id="zoomOut">➖</button>
-        </div>
     </div>
 </div>
 {% endblock %}
@@ -196,23 +304,28 @@
     const notesDisplay = document.getElementById('notesDisplay');
     const fileUpload = document.getElementById('fileUpload');
     const uploadBtn = document.querySelector('.upload-btn');
+    const uploadMode = document.getElementById('uploadMode');
     const modal = document.getElementById('imageModal');
     const modalImage = document.getElementById('modalImage');
     const closeBtn = document.querySelector('.close-btn');
-    const zoomInBtn = document.getElementById('zoomIn');
-    const zoomOutBtn = document.getElementById('zoomOut');
+    const CHUNK_SIZE = 1 * 1024 * 1024; // 1MB 分片大小
 
     let scale = 1;
     const minScale = 0.5;
     const maxScale = 3;
     const scaleStep = 0.1;
+    let isDragging = false;
+    let startX, startY, initialX = 0, initialY = 0;
+    let pinchStartDistance = 0;
 
     // --- 打开模态框 ---
     notesDisplay.addEventListener('click', (event) => {
         if (event.target.tagName === 'IMG' && event.target.dataset.fullSrc) {
-            modal.style.display = 'block';
+            modal.style.display = 'flex';
             modalImage.src = event.target.dataset.fullSrc;
             scale = 1;
+            initialX = 0;
+            initialY = 0;
             modalImage.style.transform = `scale(${scale})`;
         }
     });
@@ -220,39 +333,149 @@
     // --- 关闭模态框 ---
     closeBtn.addEventListener('click', () => {
         modal.style.display = 'none';
+        modalImage.src = '';
+        modalImage.style.transform = 'scale(1)';
     });
 
     // --- 点击模态框外部关闭 ---
     modal.addEventListener('click', (event) => {
         if (event.target === modal) {
             modal.style.display = 'none';
+            modalImage.src = '';
+            modalImage.style.transform = 'scale(1)';
         }
     });
 
-    // --- 放大 ---
-    zoomInBtn.addEventListener('click', () => {
-        if (scale < maxScale) {
-            scale += scaleStep;
-            modalImage.style.transform = `scale(${scale})`;
-        }
+    // --- 页面加载时确保模态框不显示 ---
+    document.addEventListener('DOMContentLoaded', () => {
+        modal.style.display = 'none';
+        // 初始化笔记内容中的链接
+        document.querySelectorAll('.note-text').forEach(p => {
+            p.innerHTML = convertUrlsToLinks(p.dataset.rawText);
+        });
+        // 初始隐藏保存和取消按钮
+        document.querySelectorAll('.note-actions .btn-save, .note-actions .btn-cancel').forEach(btn => {
+            btn.style.display = 'none';
+        });
     });
 
-    // --- 缩小 ---
-    zoomOutBtn.addEventListener('click', () => {
-        if (scale > minScale) {
-            scale -= scaleStep;
-            modalImage.style.transform = `scale(${scale})`;
-        }
-    });
-
-    // --- 鼠标滚轮缩放 ---
+    // --- 鼠标滚轮缩放（以鼠标位置为中心） ---
     modalImage.addEventListener('wheel', (event) => {
         event.preventDefault();
+        const rect = modalImage.getBoundingClientRect();
+        const mouseX = event.clientX - rect.left; // 鼠标相对图片左上角的 X 坐标
+        const mouseY = event.clientY - rect.top;  // 鼠标相对图片左上角的 Y 坐标
+
         const delta = event.deltaY > 0 ? -scaleStep : scaleStep;
-        const newScale = scale + delta;
-        if (newScale >= minScale && newScale <= maxScale) {
-            scale = newScale;
-            modalImage.style.transform = `scale(${scale})`;
+        const newScale = Math.min(maxScale, Math.max(minScale, scale + delta));
+        if (newScale === scale) return;
+
+        // 计算鼠标位置相对于图片中心的偏移（归一化到 [-0.5, 0.5]）
+        const offsetX = (mouseX - rect.width / 2) / scale;
+        const offsetY = (mouseY - rect.height / 2) / scale;
+
+        // 更新缩放后，调整平移以保持鼠标位置不变
+        const scaleRatio = newScale / scale;
+        initialX = initialX * scaleRatio - offsetX * (newScale - scale);
+        initialY = initialY * scaleRatio - offsetY * (newScale - scale);
+
+        scale = newScale;
+        modalImage.style.transform = `scale(${scale}) translate(${initialX}px, ${initialY}px)`;
+    });
+
+    // --- 图片拖拽 ---
+    modalImage.addEventListener('mousedown', (event) => {
+        if (scale <= 1) return;
+        isDragging = true;
+        startX = event.clientX;
+        startY = event.clientY;
+        const transform = modalImage.style.transform.match(/translate\(([^)]+)\)/);
+        if (transform) {
+            const [x, y] = transform[1].split(',').map(val => parseFloat(val));
+            initialX = x || 0;
+            initialY = y || 0;
+        }
+        modalImage.style.cursor = 'grabbing';
+    });
+
+    modalImage.addEventListener('mousemove', (event) => {
+        if (!isDragging) return;
+        event.preventDefault();
+        const dx = event.clientX - startX;
+        const dy = event.clientY - startY;
+        modalImage.style.transform = `scale(${scale}) translate(${initialX + dx}px, ${initialY + dy}px)`;
+    });
+
+    modalImage.addEventListener('mouseup', () => {
+        isDragging = false;
+        const transform = modalImage.style.transform.match(/translate\(([^)]+)\)/);
+        if (transform) {
+            const [x, y] = transform[1].split(',').map(val => parseFloat(val));
+            initialX = x || 0;
+            initialY = y || 0;
+        }
+        modalImage.style.cursor = 'grab';
+    });
+
+    modalImage.addEventListener('mouseleave', () => {
+        isDragging = false;
+        modalImage.style.cursor = 'grab';
+    });
+
+    // --- 手机端双指缩放和拖拽 ---
+    modalImage.addEventListener('touchstart', (event) => {
+        if (event.touches.length === 2) {
+            event.preventDefault();
+            const touch1 = event.touches[0];
+            const touch2 = event.touches[1];
+            pinchStartDistance = Math.hypot(
+                touch1.pageX - touch2.pageX,
+                touch1.pageY - touch2.pageY
+            );
+        } else if (event.touches.length === 1 && scale > 1) {
+            isDragging = true;
+            startX = event.touches[0].clientX;
+            startY = event.touches[0].clientY;
+            const transform = modalImage.style.transform.match(/translate\(([^)]+)\)/);
+            if (transform) {
+                const [x, y] = transform[1].split(',').map(val => parseFloat(val));
+                initialX = x || 0;
+                initialY = y || 0;
+            }
+        }
+    });
+
+    modalImage.addEventListener('touchmove', (event) => {
+        if (event.touches.length === 2) {
+            event.preventDefault();
+            const touch1 = event.touches[0];
+            const touch2 = event.touches[1];
+            const currentDistance = Math.hypot(
+                touch1.pageX - touch2.pageX,
+                touch1.pageY - touch2.pageY
+            );
+            const newScale = scale * (currentDistance / pinchStartDistance);
+            if (newScale >= minScale && newScale <= maxScale) {
+                scale = newScale;
+                modalImage.style.transform = `scale(${scale}) translate(${initialX}px, ${initialY}px)`;
+            }
+            pinchStartDistance = currentDistance;
+        } else if (event.touches.length === 1 && isDragging) {
+            event.preventDefault();
+            const dx = event.touches[0].clientX - startX;
+            const dy = event.touches[0].clientY - startY;
+            modalImage.style.transform = `scale(${scale}) translate(${initialX + dx}px, ${initialY + dy}px)`;
+        }
+    });
+
+    modalImage.addEventListener('touchend', () => {
+        isDragging = false;
+        pinchStartDistance = 0;
+        const transform = modalImage.style.transform.match(/translate\(([^)]+)\)/);
+        if (transform) {
+            const [x, y] = transform[1].split(',').map(val => parseFloat(val));
+            initialX = x || 0;
+            initialY = y || 0;
         }
     });
 
@@ -261,19 +484,266 @@
         fileUpload.click();
     });
 
-    // --- Handle file selection ---
+    // --- Handle file selection with chunked upload ---
     fileUpload.addEventListener('change', (event) => {
-        const file = event.target.files[0];
-        if (file) {
-            console.log('File selected:', file.name);
-            const reader = new FileReader();
-            reader.onload = function(loadEvent) {
-                const fileType = file.type.startsWith('image/') ? 'image' : 'file';
-                sendNoteData(fileType, loadEvent.target.result, file.name);
-            };
-            reader.readAsDataURL(file);
-            fileUpload.value = '';
+        const files = Array.from(event.target.files);
+        if (files.length === 0) return;
+
+        const mode = uploadMode.value;
+        if (mode === 'single') {
+            if (files.length > 1) {
+                alert('单张上传模式下只能选择一张图片！');
+                fileUpload.value = '';
+                return;
+            }
+            console.log('File selected:', files[0].name);
+            uploadFileInChunks(files[0]);
+        } else if (mode === 'gallery' || mode === 'zip') {
+            if (files.length > 30) {
+                alert('一次最多上传 30 张图片！');
+                fileUpload.value = '';
+                return;
+            }
+            uploadMultipleFiles(files, mode);
         }
+        fileUpload.value = '';
+    });
+
+    async function uploadFileInChunks(file) {
+        const chunkSize = CHUNK_SIZE;
+        const totalChunks = Math.ceil(file.size / chunkSize);
+        const chunkId = `chunk-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+        const progressBar = document.getElementById('progressBar');
+        const progressText = document.getElementById('progressText');
+        const progressContainer = document.getElementById('uploadProgress');
+
+        progressContainer.style.display = 'block';
+        progressBar.style.width = '0%';
+        progressText.textContent = '0%';
+
+        for (let i = 0; i < totalChunks; i++) {
+            const start = i * chunkSize;
+            const end = Math.min(start + chunkSize, file.size);
+            const chunk = file.slice(start, end);
+
+            const formData = new FormData();
+            formData.append('chunk', chunk, file.name);
+            formData.append('filename', file.name);
+            formData.append('chunkIndex', i);
+            formData.append('totalChunks', totalChunks);
+            formData.append('chunkId', chunkId);
+
+            try {
+                const response = await fetch('/notes/upload_chunk', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-Token': csrfToken
+                    },
+                    body: formData
+                });
+                const result = await response.json();
+
+                if (!result.success) {
+                    if (result.error === '不支持的文件类型') {
+                        alert('上传失败：不支持的文件类型。允许的类型：.png, .jpg, .jpeg, .gif, .pdf, .txt, .doc, .docx, .zip, .mp4');
+                    } else {
+                        alert('上传失败: ' + (result.error || '未知错误'));
+                    }
+                    progressContainer.style.display = 'none';
+                    return;
+                }
+
+                const progress = Math.round(((i + 1) / totalChunks) * 100);
+                progressBar.style.width = `${progress}%`;
+                progressText.textContent = `${progress}%`;
+
+                if (i === totalChunks - 1 && result.note) {
+                    addNoteToDisplay(result.note);
+                    notesDisplay.scrollTop = notesDisplay.scrollHeight;
+                }
+            } catch (error) {
+                console.error('Error uploading chunk:', error);
+                alert('上传分片时出错: ' + error.message);
+                progressContainer.style.display = 'none';
+                return;
+            }
+        }
+        progressContainer.style.display = 'none';
+    }
+
+    async function uploadMultipleFiles(files, mode) {
+        const progressBar = document.getElementById('progressBar');
+        const progressText = document.getElementById('progressText');
+        const progressContainer = document.getElementById('uploadProgress');
+
+        progressContainer.style.display = 'block';
+        progressBar.style.width = '0%';
+        progressText.textContent = '0%';
+
+        const totalFiles = files.length;
+        let uploadedFiles = 0;
+        const filePaths = [];
+
+        for (const file of files) {
+            const chunkSize = CHUNK_SIZE;
+            const totalChunks = Math.ceil(file.size / chunkSize);
+            const chunkId = `chunk-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
+            for (let i = 0; i < totalChunks; i++) {
+                const start = i * chunkSize;
+                const end = Math.min(start + chunkSize, file.size);
+                const chunk = file.slice(start, end);
+
+                const formData = new FormData();
+                formData.append('chunk', chunk, file.name);
+                formData.append('filename', file.name);
+                formData.append('chunkIndex', i);
+                formData.append('totalChunks', totalChunks);
+                formData.append('chunkId', chunkId);
+
+                try {
+                    const response = await fetch('/notes/upload_chunk', {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRF-Token': csrfToken
+                        },
+                        body: formData
+                    });
+                    const result = await response.json();
+
+                    if (!result.success) {
+                        if (result.error === '不支持的文件类型') {
+                            alert('上传失败：不支持的文件类型。允许的类型：.png, .jpg, .jpeg, .gif, .pdf, .txt, .doc, .docx, .zip, .mp4');
+                        } else {
+                            alert('上传失败: ' + (result.error || '未知错误'));
+                        }
+                        progressContainer.style.display = 'none';
+                        return;
+                    }
+
+                    if (i === totalChunks - 1 && result.note) {
+                        filePaths.push(result.note.content);
+                    }
+                } catch (error) {
+                    console.error('Error uploading chunk:', error);
+                    alert('上传分片时出错: ' + error.message);
+                    progressContainer.style.display = 'none';
+                    return;
+                }
+            }
+
+            uploadedFiles++;
+            const progress = Math.round((uploadedFiles / totalFiles) * 100);
+            progressBar.style.width = `${progress}%`;
+            progressText.textContent = `${progress}%`;
+        }
+
+        // 上传完成后，发送请求保存为 gallery 或 zip
+        try {
+            const response = await fetch('/notes/add_multiple', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-Token': csrfToken
+                },
+                body: JSON.stringify({
+                    mode: mode,
+                    file_paths: filePaths
+                })
+            });
+
+            if (!response.ok) {
+                const text = await response.text();
+                console.error('Response not OK:', response.status, text);
+                throw new Error(`服务器错误: ${response.status} - ${text}`);
+            }
+
+            const result = await response.json();
+
+            if (result.redirect) {
+                alert(result.error || '会话已超时，请重新登录');
+                window.location.href = result.redirect;
+                return;
+            }
+
+            if (result.success && result.note) {
+                addNoteToDisplay(result.note);
+                notesDisplay.scrollTop = notesDisplay.scrollHeight;
+            } else {
+                alert('保存笔记失败: ' + (result.error || '未知错误'));
+            }
+        } catch (error) {
+            console.error('Error saving multiple files:', error);
+            alert('保存多文件笔记时出错: ' + error.message);
+        }
+
+        progressContainer.style.display = 'none';
+    }
+
+    // --- 画廊滑动功能 ---
+    document.addEventListener('DOMContentLoaded', () => {
+        document.querySelectorAll('.gallery-container').forEach(container => {
+            const gallery = container.querySelector('.gallery');
+            const images = JSON.parse(container.dataset.images);
+            const leftArrow = container.querySelector('.arrow-left');
+            const rightArrow = container.querySelector('.arrow-right');
+            let currentPage = 0;
+            const imagesPerPage = 3;
+            const totalPages = Math.ceil(images.length / imagesPerPage);
+
+            const updateGallery = () => {
+                const offset = -currentPage * 100;
+                gallery.style.transform = `translateX(${offset}%)`;
+
+                leftArrow.style.display = currentPage === 0 ? 'none' : 'block';
+                rightArrow.style.display = currentPage === totalPages - 1 ? 'none' : 'block';
+
+                gallery.innerHTML = '';
+                const start = currentPage * imagesPerPage;
+                const end = Math.min(start + imagesPerPage, images.length);
+                for (let i = start; i < end; i++) {
+                    const img = document.createElement('img');
+                    img.src = images[i];
+                    img.alt = '画廊图片';
+                    img.dataset.fullSrc = images[i];
+                    img.loading = 'lazy';
+                    gallery.appendChild(img);
+                }
+            };
+
+            leftArrow.addEventListener('click', () => {
+                if (currentPage > 0) {
+                    currentPage--;
+                    updateGallery();
+                }
+            });
+
+            rightArrow.addEventListener('click', () => {
+                if (currentPage < totalPages - 1) {
+                    currentPage++;
+                    updateGallery();
+                }
+            });
+
+            let touchStartX = 0;
+            gallery.addEventListener('touchstart', (e) => {
+                touchStartX = e.touches[0].clientX;
+            });
+
+            gallery.addEventListener('touchend', (e) => {
+                const touchEndX = e.changedTouches[0].clientX;
+                const swipeDistance = touchEndX - touchStartX;
+                if (swipeDistance > 50 && currentPage > 0) {
+                    currentPage--;
+                    updateGallery();
+                } else if (swipeDistance < -50 && currentPage < totalPages - 1) {
+                    currentPage++;
+                    updateGallery();
+                }
+            });
+
+            updateGallery();
+        });
     });
 
     // --- Paste Handling ---
@@ -301,6 +771,10 @@
                 break;
             }
         }
+        if (!foundImage && pastedText.trim()) {
+            event.preventDefault();
+            sendNoteData('text', pastedText.trim());
+        }
     });
 
     // --- Text Submission ---
@@ -312,38 +786,15 @@
             console.log('Enter pressed, text:', textContent);
             if (textContent) {
                 sendNoteData('text', textContent);
-                noteInput.innerHTML = '';
+                noteInput.innerText = '';
             }
         }
     });
 
-    // --- 函数：将文本中的 URL 转换为可点击链接 ---
-    function convertUrlsToLinks(text) {
-        const urlRegex = /(https?:\/\/[^\s]+)/g;
-        const escapedText = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-        return escapedText.replace(urlRegex, function(url) {
-            return `<a href="${url}" target="_blank" rel="noopener noreferrer">${url}</a>`;
-        });
-    }
-
-    // --- 渲染页面加载时的文本笔记中的链接 ---
-    document.addEventListener('DOMContentLoaded', () => {
-        document.querySelectorAll('.note-text').forEach(p => {
-            const rawText = p.getAttribute('data-raw-text');
-            if (rawText) {
-                p.innerHTML = convertUrlsToLinks(rawText);
-            }
-        });
-    });
-
-    // --- Send New Note Data ---
-    async function sendNoteData(type, content, filename = null) {
-        console.log('Sending note:', { type, content, filename });
-        if ((type === 'image' || type === 'file') && !filename) {
-            console.error('Filename is missing for file/image upload');
-            alert('文件上传失败：文件名缺失');
-            return;
-        }
+    // --- Send Note Data ---
+    async function sendNoteData(type, content, filename) {
+        const data = { type, content };
+        if (filename) data.filename = filename;
         try {
             const response = await fetch('/notes/add', {
                 method: 'POST',
@@ -351,52 +802,22 @@
                     'Content-Type': 'application/json',
                     'X-CSRF-Token': csrfToken
                 },
-                body: JSON.stringify({
-                    type: type,
-                    content: content,
-                    filename: filename
-                })
+                body: JSON.stringify(data)
             });
-            console.log('Response status:', response.status);
-
-            if (response.status === 400) {
-                alert('会话可能已超时，请重新登录');
-                window.location.href = '/login';
-                return;
-            }
-
             const result = await response.json();
-            console.log('Response data:', result);
-
-            if (result.redirect) {
-                alert(result.error || '会话已超时，请重新登录');
-                window.location.href = result.redirect;
-                return;
-            }
-
             if (result.success && result.note) {
                 addNoteToDisplay(result.note);
                 notesDisplay.scrollTop = notesDisplay.scrollHeight;
-            } else if (response.status === 409) {
-                alert('文件已存在，无需重复上传');
             } else {
-                alert('保存笔记失败: ' + (result.error || '未知错误'));
+                alert('添加笔记失败: ' + (result.error || '未知错误'));
             }
         } catch (error) {
-            console.error('Error sending note:', error);
-            alert('发送笔记时出错: ' + error.message);
+            console.error('Error adding note:', error);
+            alert('添加笔记时出错: ' + error.message);
         }
     }
 
-    // --- Format file size ---
-    function formatFileSize(bytes) {
-        if (bytes === null || bytes === undefined) return '';
-        if (bytes < 1024) return bytes + ' B';
-        else if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(2) + ' KB';
-        else return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
-    }
-
-    // --- Add New Note to Display ---
+    // --- Add Note to Display ---
     function addNoteToDisplay(note) {
         console.log('Adding note to display:', note);
         const noteDiv = document.createElement('div');
@@ -410,7 +831,7 @@
         } catch(e) {
             timeSpan.textContent = note.timestamp + ' UTC';
         }
-        if (note.type === 'image' || note.type === 'file') {
+        if (note.type === 'image' || note.type === 'file' || note.type === 'gallery' || note.type === 'zip') {
             if (note.md5) {
                 const md5Span = document.createElement('span');
                 md5Span.className = 'file-md5';
@@ -449,70 +870,134 @@
             img.dataset.fullSrc = note.content;
             contentDiv.appendChild(img);
             actionsDiv.innerHTML = `<button class="btn-delete" title="删除">🗑</button>`;
-        } else if (note.type === 'file') {
+        } else if (note.type === 'file' || note.type === 'zip') {
             const a = document.createElement('a');
             a.href = note.content;
             a.textContent = note.raw_content || '下载文件';
             a.target = '_blank';
             contentDiv.appendChild(a);
             actionsDiv.innerHTML = `<button class="btn-delete" title="删除">🗑</button>`;
+        } else if (note.type === 'gallery') {
+            let images = note.content;
+            if (typeof images === 'string') {
+                try {
+                    images = JSON.parse(images);
+                } catch (e) {
+                    console.error('Error parsing gallery images:', e);
+                    images = [images];
+                }
+            }
+            if (!Array.isArray(images)) {
+                images = [images];
+            }
+            const galleryContainer = document.createElement('div');
+            galleryContainer.className = 'gallery-container';
+            galleryContainer.dataset.images = JSON.stringify(images);
+            galleryContainer.innerHTML = `
+                <button class="gallery-arrow arrow-left" style="display: none;">←</button>
+                <div class="gallery">
+                    ${images.slice(0, 3).map(img => `<img src="${img}" alt="画廊图片" data-full-src="${img}" loading="lazy">`).join('')}
+                </div>
+                <button class="gallery-arrow arrow-right" style="${images.length <= 3 ? 'display: none;' : ''}">→</button>
+            `;
+            contentDiv.appendChild(galleryContainer);
+            actionsDiv.innerHTML = `<button class="btn-delete" title="删除">🗑</button>`;
         }
         notesDisplay.appendChild(noteDiv);
     }
 
-    // --- Handle Clicks on Action Buttons ---
-    notesDisplay.addEventListener('click', function(event) {
-        console.log('Click event on notesDisplay:', event.target);
-        const target = event.target;
-        const noteEntry = target.closest('.note-entry');
-        if (!noteEntry) return;
-        const noteId = noteEntry.dataset.noteId;
-        if (target.classList.contains('btn-delete')) {
-            console.log('Delete button clicked for note:', noteId);
-            handleDeleteNote(noteId, noteEntry);
-        } else if (target.classList.contains('btn-edit')) {
-            console.log('Edit button clicked for note:', noteId);
-            handleEditNote(noteEntry);
-        } else if (target.classList.contains('btn-save')) {
-            console.log('Save button clicked for note:', noteId);
-            handleSaveEdit(noteEntry);
-        } else if (target.classList.contains('btn-cancel')) {
-            console.log('Cancel button clicked for note:', noteId);
-            handleCancelEdit(noteEntry);
-        }
-    });
+    // --- Format File Size ---
+    function formatFileSize(bytes) {
+        if (bytes < 1024) return bytes + ' B';
+        else if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(2) + ' KB';
+        else if (bytes < 1024 * 1024 * 1024) return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+        else return (bytes / (1024 * 1024 * 1024)).toFixed(2) + ' GB';
+    }
 
-    // --- Delete Note Logic ---
-    async function handleDeleteNote(noteId, noteElement) {
-        if (confirm('确定要删除这条笔记吗？')) {
-            console.log('Deleting note:', noteId);
+    // --- Convert URLs to Links ---
+    function convertUrlsToLinks(text) {
+        const urlPattern = /(https?:\/\/[^\s<]+[^<.,:;"')\]\s])/g;
+        return text.replace(urlPattern, '<a href="$1" target="_blank">$1</a>').replace(/\n/g, '<br>');
+    }
+
+    // --- Edit Note ---
+    notesDisplay.addEventListener('click', async (event) => {
+        const target = event.target;
+        const noteDiv = target.closest('.note-entry');
+        if (!noteDiv) return;
+        const noteId = noteDiv.dataset.noteId;
+
+        if (target.classList.contains('btn-edit')) {
+            noteDiv.classList.add('editing');
+            const p = noteDiv.querySelector('.note-text');
+            const rawText = p.dataset.rawText;
+            const textarea = document.createElement('textarea');
+            textarea.value = rawText;
+            p.after(textarea);
+            textarea.focus();
+            // 确保保存和取消按钮显示
+            noteDiv.querySelector('.btn-save').style.display = 'inline-block';
+            noteDiv.querySelector('.btn-cancel').style.display = 'inline-block';
+        } else if (target.classList.contains('btn-save')) {
+            const textarea = noteDiv.querySelector('textarea');
+            const newContent = textarea.value.trim();
+            if (!newContent) {
+                alert('内容不能为空');
+                return;
+            }
             try {
-                const response = await fetch(`/notes/delete/${noteId}`, {
+                const response = await fetch(`/notes/edit/${noteId}`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                         'X-CSRF-Token': csrfToken
+                    },
+                    body: JSON.stringify({ content: newContent })
+                });
+                const result = await response.json();
+                if (result.success) {
+                    const p = noteDiv.querySelector('.note-text');
+                    p.textContent = newContent;
+                    p.dataset.rawText = newContent;
+                    p.innerHTML = convertUrlsToLinks(newContent);
+                    noteDiv.querySelector('.timestamp').textContent = new Date(result.new_timestamp).toLocaleString() + ' UTC';
+                    noteDiv.classList.remove('editing');
+                    textarea.remove();
+                    // 恢复按钮状态
+                    noteDiv.querySelector('.btn-save').style.display = 'none';
+                    noteDiv.querySelector('.btn-cancel').style.display = 'none';
+                    noteDiv.querySelector('.btn-edit').style.display = 'inline-block';
+                    noteDiv.querySelector('.btn-delete').style.display = 'inline-block';
+                } else {
+                    alert('编辑失败: ' + (result.error || '未知错误'));
+                }
+            } catch (error) {
+                console.error('Error editing note:', error);
+                alert('编辑笔记时出错: ' + error.message);
+            }
+        } else if (target.classList.contains('btn-cancel')) {
+            noteDiv.classList.remove('editing');
+            noteDiv.querySelector('textarea').remove();
+            // 恢复按钮状态
+            noteDiv.querySelector('.btn-save').style.display = 'none';
+            noteDiv.querySelector('.btn-cancel').style.display = 'none';
+            noteDiv.querySelector('.btn-edit').style.display = 'inline-block';
+            noteDiv.querySelector('.btn-delete').style.display = 'inline-block';
+        } else if (target.classList.contains('btn-delete')) {
+            if (!confirm('确定删除此笔记？')) return;
+            try {
+                const response = await fetch(`/notes/delete/${noteId}`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-Token': csrfToken
                     }
                 });
-                console.log('Delete response status:', response.status);
-
-                if (response.status === 400) {
-                    alert('会话可能已超时，请重新登录');
-                    window.location.href = '/login';
-                    return;
-                }
-
                 const result = await response.json();
-                console.log('Delete response data:', result);
-
-                if (result.redirect) {
-                    alert(result.error || '会话已超时，请重新登录');
-                    window.location.href = result.redirect;
-                    return;
-                }
-
                 if (result.success) {
-                    noteElement.remove();
+                    noteDiv.remove();
+                    if (!notesDisplay.querySelector('.note-entry')) {
+                        notesDisplay.innerHTML = '<div class="no-notes">暂无笔记，请添加新笔记！</div>';
+                    }
                 } else {
                     alert('删除失败: ' + (result.error || '未知错误'));
                 }
@@ -521,112 +1006,20 @@
                 alert('删除笔记时出错: ' + error.message);
             }
         }
-    }
+    });
 
-    // --- Edit Note Logic ---
-    function handleEditNote(noteElement) {
-        console.log('Editing note');
-        noteElement.classList.add('editing');
-        const contentDiv = noteElement.querySelector('.note-content');
-        const p = contentDiv.querySelector('p');
-        const currentText = p.getAttribute('data-raw-text');
-        let textarea = contentDiv.querySelector('textarea');
-        if (!textarea) {
-            textarea = document.createElement('textarea');
-            textarea.className = 'form-control';
-            contentDiv.appendChild(textarea);
-            textarea.addEventListener('keydown', (event) => {
-                if (event.ctrlKey && event.key === 's') {
-                    event.preventDefault();
-                    console.log('Ctrl+S pressed, saving note');
-                    handleSaveEdit(noteElement);
+    // --- Ctrl+S 快捷键保存 ---
+    document.addEventListener('keydown', (event) => {
+        if (event.ctrlKey && event.key === 's') {
+            event.preventDefault(); // 阻止浏览器默认保存行为
+            const editingNote = document.querySelector('.note-entry.editing');
+            if (editingNote) {
+                const saveButton = editingNote.querySelector('.btn-save');
+                if (saveButton) {
+                    saveButton.click(); // 触发保存按钮的点击事件
                 }
-            });
-        }
-        textarea.value = currentText;
-        textarea.style.display = 'block';
-        textarea.focus();
-    }
-
-    // --- Cancel Edit ---
-    function handleCancelEdit(noteElement) {
-        console.log('Canceling edit');
-        noteElement.classList.remove('editing');
-        const contentDiv = noteElement.querySelector('.note-content');
-        const textarea = contentDiv.querySelector('textarea');
-        if (textarea) {
-            textarea.style.display = 'none';
-        }
-        const actionsDiv = noteElement.querySelector('.note-actions');
-        const saveBtn = actionsDiv.querySelector('.btn-save');
-        const cancelBtn = actionsDiv.querySelector('.btn-cancel');
-        const editBtn = actionsDiv.querySelector('.btn-edit');
-        const deleteBtn = actionsDiv.querySelector('.btn-delete');
-        saveBtn.style.display = 'none';
-        cancelBtn.style.display = 'none';
-        editBtn.style.display = 'inline-block';
-        deleteBtn.style.display = 'inline-block';
-    }
-
-    // --- Save Edit ---
-    async function handleSaveEdit(noteElement) {
-        const noteId = noteElement.dataset.noteId;
-        const textarea = noteElement.querySelector('textarea');
-        const newContent = textarea.value.trim();
-        if (newContent === "") {
-            alert("笔记内容不能为空！");
-            return;
-        }
-        console.log('Saving edit for note:', noteId, 'New content:', newContent);
-        try {
-            const response = await fetch(`/notes/edit/${noteId}`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-Token': csrfToken
-                },
-                body: JSON.stringify({ content: newContent })
-            });
-            console.log('Edit response status:', response.status);
-
-            if (response.status === 400) {
-                alert('会话可能已超时，请重新登录');
-                window.location.href = '/login';
-                return;
             }
-
-            const result = await response.json();
-            console.log('Edit response data:', result);
-
-            if (result.redirect) {
-                alert(result.error || '会话已超时，请重新登录');
-                window.location.href = result.redirect;
-                return;
-            }
-
-            if (result.success) {
-                const p = noteElement.querySelector('.note-content p');
-                p.setAttribute('data-raw-text', result.new_content);
-                p.innerHTML = convertUrlsToLinks(result.new_content);
-                const timestampSpan = noteElement.querySelector('.timestamp');
-                try {
-                    timestampSpan.textContent = new Date(result.new_timestamp).toLocaleString() + ' UTC';
-                } catch(e) {
-                    timestampSpan.textContent = result.new_timestamp + ' UTC';
-                }
-                handleCancelEdit(noteElement);
-            } else {
-                alert('保存失败: ' + (result.error || '未知错误'));
-            }
-        } catch (error) {
-            console.error('Error saving note:', error);
-            alert('保存笔记时出错: ' + error.message);
         }
-    }
-
-    // Scroll to bottom on initial load
-    window.onload = () => {
-        notesDisplay.scrollTop = notesDisplay.scrollHeight;
-    }
+    });
 </script>
 {% endblock %}

@@ -1,3 +1,0 @@
-username:wswwsw password:123456789
-username:wangling password:728
-username:wanglings password:728s

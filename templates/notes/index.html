@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+{% block title %}我的笔记{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-3">
+        <div class="card mb-4">
+            <div class="card-header">分类</div>
+            <div class="card-body">
+                <div id="categories"></div>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-header">标签</div>
+            <div class="card-body">
+                <div id="tags"></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-9">
+        <div class="card mb-3">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span>我的笔记</span>
+                <div>
+                    <button id="newNoteBtn" class="btn btn-sm btn-primary me-2">新建笔记</button>
+                    <button id="uploadBtn" class="btn btn-sm btn-secondary">上传文件</button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <input type="text" id="searchInput" class="form-control" placeholder="搜索笔记...">
+                </div>
+                <div id="notesContainer"></div>
+                <nav id="pagination" class="mt-3"></nav>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 笔记编辑模态框 -->
+<div class="modal fade" id="noteModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalTitle">编辑笔记</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="noteForm">
+                    <input type="hidden" id="noteId">
+                    <div class="mb-3">
+                        <label for="noteTitle" class="form-label">标题</label>
+                        <input type="text" class="form-control" id="noteTitle">
+                    </div>
+                    <div class="mb-3">
+                        <label for="noteContent" class="form-label">内容</label>
+                        <textarea class="form-control" id="noteContent" rows="10"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" id="saveNoteBtn" class="btn btn-primary">保存</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 文件上传模态框 -->
+<div class="modal fade" id="uploadModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">上传文件</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="uploadForm" enctype="multipart/form-data">
+                    <div class="mb-3">
+                        <label for="fileInput" class="form-label">选择文件</label>
+                        <input class="form-control" type="file" id="fileInput" name="file">
+                    </div>
+                    <div class="progress mb-3 d-none" id="uploadProgress">
+                        <div class="progress-bar" role="progressbar" style="width: 0%"></div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" id="uploadSubmitBtn" class="btn btn-primary">上传</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/notes.js') }}"></script>
+{% endblock %}
