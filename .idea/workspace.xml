@@ -6,7 +6,6 @@
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/instance/notes_app.db" afterPath="$PROJECT_DIR$/instance/notes_app.db" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/templates/notes.html" afterPath="$PROJECT_DIR$/templates/notes.html" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/test6.py" afterPath="$PROJECT_DIR$/test6.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/testH5.py" afterPath="$PROJECT_DIR$/testH5.py" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -21,11 +20,11 @@
       <file leaf-file-name="testH5.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/testH5.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="358">
-              <caret line="243" column="29" lean-forward="true" selection-start-line="243" selection-start-column="29" selection-end-line="243" selection-end-column="29" />
+            <state relative-caret-position="794">
+              <caret line="377" column="29" lean-forward="true" selection-start-line="377" selection-start-column="29" selection-end-line="377" selection-end-column="29" />
               <folding>
                 <element signature="e#0#114#0" expanded="true" />
-                <element signature="e#10199#13661#0" expanded="false" />
+                <element signature="e#10624#15591#0" expanded="false" />
               </folding>
             </state>
           </provider>
@@ -34,8 +33,8 @@
       <file leaf-file-name="notes.html" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/templates/notes.html">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="607">
-              <caret line="650" column="38" lean-forward="true" selection-start-line="650" selection-start-column="38" selection-end-line="650" selection-end-column="38" />
+            <state relative-caret-position="243">
+              <caret line="570" column="49" lean-forward="true" selection-start-line="570" selection-start-column="49" selection-end-line="570" selection-end-column="49" />
               <folding />
             </state>
           </provider>
@@ -53,20 +52,15 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>hours</find>
-      <find>notes_pag</find>
-      <find>Note</find>
       <find>notes_</find>
       <find>notes/add</find>
       <find>app.config</find>
       <find>MAX_CONTENT_LENGTH</find>
-      <find>upload</find>
       <find>fileUpload</find>
       <find>uploadFileInChunks</find>
       <find>mp4</find>
       <find>ALLOWED_EXTENSIONS</find>
       <find>login_required</find>
-      <find>allow</find>
       <find>{% elif note.content_type == 'gallery' %}</find>
       <find>@app.route('/notes')</find>
       <find>addNoteToDisplay</find>
@@ -82,6 +76,11 @@
       <find>note-actions</find>
       <find>notes</find>
       <find>upload_ch</find>
+      <find>allow</find>
+      <find>chunk</find>
+      <find>allowed</find>
+      <find>upload</find>
+      <find>upload_c</find>
       <find>uploadMultipleFiles</find>
     </findStrings>
   </component>
@@ -371,7 +370,14 @@
       <option name="project" value="LOCAL" />
       <updated>1745151352416</updated>
     </task>
-    <option name="localTasksCounter" value="5" />
+    <task id="LOCAL-00005" summary="修改了上传多张照片刷新后，前端会显示单张照片的笔记栏等问题">
+      <created>1746350371561</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1746350371562</updated>
+    </task>
+    <option name="localTasksCounter" value="6" />
     <servers />
   </component>
   <component name="TodoView">
@@ -440,7 +446,8 @@
     <MESSAGE value="确定这个版本的文件上传大小可以是50m" />
     <MESSAGE value="添加了25行的备注" />
     <MESSAGE value="添加了25行的备注12323" />
-    <option name="LAST_COMMIT_MESSAGE" value="添加了25行的备注12323" />
+    <MESSAGE value="修改了上传多张照片刷新后，前端会显示单张照片的笔记栏等问题" />
+    <option name="LAST_COMMIT_MESSAGE" value="修改了上传多张照片刷新后，前端会显示单张照片的笔记栏等问题" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
@@ -595,6 +602,7 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="208">
           <caret line="24" column="0" lean-forward="false" selection-start-line="24" selection-start-column="0" selection-end-line="24" selection-end-column="0" />
+          <folding />
         </state>
       </provider>
     </entry>
@@ -731,19 +739,19 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/templates/notes.html">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="607">
-          <caret line="650" column="38" lean-forward="true" selection-start-line="650" selection-start-column="38" selection-end-line="650" selection-end-column="38" />
+        <state relative-caret-position="243">
+          <caret line="570" column="49" lean-forward="true" selection-start-line="570" selection-start-column="49" selection-end-line="570" selection-end-column="49" />
           <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/testH5.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="358">
-          <caret line="243" column="29" lean-forward="true" selection-start-line="243" selection-start-column="29" selection-end-line="243" selection-end-column="29" />
+        <state relative-caret-position="794">
+          <caret line="377" column="29" lean-forward="true" selection-start-line="377" selection-start-column="29" selection-end-line="377" selection-end-column="29" />
           <folding>
             <element signature="e#0#114#0" expanded="true" />
-            <element signature="e#10199#13661#0" expanded="false" />
+            <element signature="e#10624#15591#0" expanded="false" />
           </folding>
         </state>
       </provider>

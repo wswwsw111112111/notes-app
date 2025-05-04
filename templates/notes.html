@@ -588,6 +588,9 @@
             const chunkSize = CHUNK_SIZE;
             const totalChunks = Math.ceil(file.size / chunkSize);
             const chunkId = `chunk-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+            const filename = file.name.toLowerCase();
+
+            console.log(`File selected: ${filename}`);
 
             for (let i = 0; i < totalChunks; i++) {
                 const start = i * chunkSize;
@@ -595,8 +598,8 @@
                 const chunk = file.slice(start, end);
 
                 const formData = new FormData();
-                formData.append('chunk', chunk, file.name);
-                formData.append('filename', file.name);
+                formData.append('chunk', chunk, filename);
+                formData.append('filename', filename);
                 formData.append('chunkIndex', i);
                 formData.append('totalChunks', totalChunks);
                 formData.append('chunkId', chunkId);
@@ -610,14 +613,22 @@
                         },
                         body: formData
                     });
-                    const result = await response.json();
+
+                    let result;
+                    const responseClone = response.clone(); // 克隆响应避免重复读取
+                    try {
+                        result = await response.json();
+                    } catch (e) {
+                        const errorText = await responseClone.text();
+                        console.error(`Non-JSON response for ${filename}:`, errorText);
+                        alert(`服务器响应无效: ${filename}，错误: ${errorText || '未知错误'}`);
+                        progressContainer.style.display = 'none';
+                        return;
+                    }
 
                     if (!result.success) {
-                        if (result.error === '不支持的文件类型') {
-                            alert('上传失败：不支持的文件类型。允许的类型：.png, .jpg, .jpeg, .gif, .pdf, .txt, .doc, .docx, .zip, .mp4');
-                        } else {
-                            alert('上传失败: ' + (result.error || '未知错误'));
-                        }
+                        console.error(`Upload failed for ${filename}: ${result.error}`);
+                        alert(`上传失败: ${result.error || '未知错误'} (文件: ${filename})`);
                         progressContainer.style.display = 'none';
                         return;
                     }
@@ -628,8 +639,8 @@
                         filePaths.push(result.note.content);
                     }
                 } catch (error) {
-                    console.error('Error uploading chunk:', error);
-                    alert('上传分片时出错: ' + error.message);
+                    console.error(`Error uploading chunk for ${filename}:`, error);
+                    alert(`上传分片时出错: ${error.message} (文件: ${filename})`);
                     progressContainer.style.display = 'none';
                     return;
                 }
@@ -654,13 +665,17 @@
                 })
             });
 
-            if (!response.ok) {
-                const text = await response.text();
-                console.error('Response not OK:', response.status, text);
-                throw new Error(`服务器错误: ${response.status} - ${text}`);
+            let result;
+            const responseClone = response.clone();
+            try {
+                result = await response.json();
+            } catch (e) {
+                const errorText = await responseClone.text();
+                console.error('Non-JSON response:', errorText);
+                alert(`服务器响应无效: ${errorText || '未知错误'}`);
+                progressContainer.style.display = 'none';
+                return;
             }
-
-            const result = await response.json();
 
             if (result.redirect) {
                 alert(result.error || '会话已超时，请重新登录');
@@ -672,15 +687,92 @@
                 addNoteToDisplay(result.note);
                 notesDisplay.scrollTop = notesDisplay.scrollHeight;
             } else {
-                alert('保存笔记失败: ' + (result.error || '未知错误'));
+                alert(`保存笔记失败: ${result.error || '未知错误'}`);
             }
         } catch (error) {
             console.error('Error saving multiple files:', error);
-            alert('保存多文件笔记时出错: ' + error.message);
+            alert(`保存多文件笔记时出错: ${error.message}`);
         }
 
         progressContainer.style.display = 'none';
     }
+
+    async function uploadFileInChunks(file) {
+        const chunkSize = CHUNK_SIZE;
+        const totalChunks = Math.ceil(file.size / chunkSize);
+        const chunkId = `chunk-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+        const filename = file.name.toLowerCase();
+
+        console.log(`File selected: ${filename}`);
+
+        const progressBar = document.getElementById('progressBar');
+        const progressText = document.getElementById('progressText');
+        const progressContainer = document.getElementById('uploadProgress');
+
+        progressContainer.style.display = 'block';
+        progressBar.style.width = '0%';
+        progressText.textContent = '0%';
+
+        for (let i = 0; i < totalChunks; i++) {
+            const start = i * chunkSize;
+            const end = Math.min(start + chunkSize, file.size);
+            const chunk = file.slice(start, end);
+
+            const formData = new FormData();
+            formData.append('chunk', chunk, filename);
+            formData.append('filename', filename);
+            formData.append('chunkIndex', i);
+            formData.append('totalChunks', totalChunks);
+            formData.append('chunkId', chunkId);
+            formData.append('gallery_mode', 'false');
+
+            try {
+                const response = await fetch('/notes/upload_chunk', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-Token': csrfToken
+                    },
+                    body: formData
+                });
+
+                let result;
+                const responseClone = response.clone();
+                try {
+                    result = await response.json();
+                } catch (e) {
+                    const errorText = await responseClone.text();
+                    console.error(`Non-JSON response for ${filename}:`, errorText);
+                    alert(`服务器响应无效: ${filename}，错误: ${errorText || '未知错误'}`);
+                    progressContainer.style.display = 'none';
+                    return;
+                }
+
+                if (!result.success) {
+                    console.error(`Upload failed for ${filename}: ${result.error}`);
+                    alert(`上传失败: ${result.error || '未知错误'} (文件: ${filename})`);
+                    progressContainer.style.display = 'none';
+                    return;
+                }
+
+                const progress = Math.round(((i + 1) / totalChunks) * 100);
+                progressBar.style.width = `${progress}%`;
+                progressText.textContent = `${progress}%`;
+
+                if (i === totalChunks - 1 && result.note) {
+                    addNoteToDisplay(result.note);
+                    notesDisplay.scrollTop = notesDisplay.scrollHeight;
+                }
+            } catch (error) {
+                console.error(`Error uploading chunk for ${filename}:`, error);
+                alert(`上传分片时出错: ${error.message} (文件: ${filename})`);
+                progressContainer.style.display = 'none';
+                return;
+            }
+        }
+
+        progressContainer.style.display = 'none';
+    }
+
 
     // --- 画廊滑动功能 ---
     document.addEventListener('DOMContentLoaded', () => {

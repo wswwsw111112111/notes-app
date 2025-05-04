@@ -63,34 +63,38 @@ class Note(db.Model):
         return f'<Note {self.id} {self.content_type}>'
 
 
-
-
 def allowed_file(filename, file_content=None):
-    # 检查扩展名
+    # 规范化扩展名，始终转换为小写
     ext = os.path.splitext(filename)[1].lower()
     if ext not in ALLOWED_EXTENSIONS:
         return False
-    # 检查 MIME 类型（仅在提供文件内容时）
-    if file_content:
+
+    # 如果未提供文件内容，允许通过（依赖扩展名）
+    if not file_content:
+        return True
+
+    # MIME 类型验证
+    try:
         mime = magic.Magic(mime=True)
         file_mime = mime.from_buffer(file_content[:2048])  # 检查前 2KB
         allowed_mimes = {
-            '.png': 'image/png',
-            '.jpg': 'image/jpeg',
-            '.jpeg': 'image/jpeg',
-            '.gif': 'image/gif',
-            '.pdf': 'application/pdf',
-            '.txt': 'text/plain',
-            '.doc': 'application/msword',
-            '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-            '.zip': 'application/zip',
-            '.mp4': 'video/mp4'
+            '.png': ['image/png', 'image/x-png', 'application/octet-stream', 'image/vnd.microsoft.icon'],
+            '.jpg': ['image/jpeg', 'image/x-jpeg', 'application/octet-stream'],
+            '.jpeg': ['image/jpeg', 'image/x-jpeg', 'application/octet-stream'],
+            '.gif': ['image/gif'],
+            '.pdf': ['application/pdf'],
+            '.txt': ['text/plain'],
+            '.doc': ['application/msword'],
+            '.docx': ['application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
+            '.zip': ['application/zip'],
+            '.mp4': ['video/mp4']
         }
-        return allowed_mimes.get(ext) == file_mime
-    return True
-
-
-
+        # 如果 MIME 类型不在列表中，但扩展名正确，允许通过
+        return file_mime in allowed_mimes.get(ext, []) or ext in ALLOWED_EXTENSIONS
+    except Exception as e:
+        # 捕获 python-magic 异常，依赖扩展名
+        print(f"MIME check failed for {filename}: {str(e)}")
+        return ext in ALLOWED_EXTENSIONS
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
@@ -245,58 +249,82 @@ def add_note():
         print(f"Add note failed: Database error - {str(e)}")
         return jsonify({'success': False, 'error': f'数据库错误: {str(e)}'}), 500
 
-# 修改 /notes/upload_chunk 路由
 @app.route('/notes/upload_chunk', methods=['POST'])
 @login_required
 def upload_chunk():
     user_id = current_user.id
     chunk = request.files.get('chunk')
     filename = request.form.get('filename')
-    chunk_index = int(request.form.get('chunkIndex'))
-    total_chunks = int(request.form.get('totalChunks'))
+    chunk_index = int(request.form.get('chunkIndex', -1))
+    total_chunks = int(request.form.get('totalChunks', -1))
     chunk_id = request.form.get('chunkId')
-    gallery_mode = request.form.get('gallery_mode', 'false').lower() == 'true'  # 新增参数
+    gallery_mode = request.form.get('gallery_mode', 'false').lower() == 'true'
 
-    if not chunk or not filename or not chunk_id:
-        return jsonify({'success': False, 'error': '缺少必要参数'}), 400
+    if not chunk or not filename or chunk_index < 0 or total_chunks < 0 or not chunk_id:
+        return jsonify({'success': False, 'error': '缺少必要参数或参数无效'}), 400
 
-    # 验证文件类型
-    chunk_data = chunk.read()
-    if not allowed_file(filename, chunk_data):
-        return jsonify({'success': False, 'error': '不支持的文件类型'}), 400
-    chunk.seek(0)  # 重置文件指针
-
+    # 保存分片
     chunk_dir = os.path.join(app.config['TEMP_CHUNK_DIR'], chunk_id)
     os.makedirs(chunk_dir, exist_ok=True)
     chunk_path = os.path.join(chunk_dir, f'chunk-{chunk_index}')
-    chunk.save(chunk_path)
+    try:
+        chunk.save(chunk_path)
+    except Exception as e:
+        shutil.rmtree(chunk_dir, ignore_errors=True)
+        return jsonify({'success': False, 'error': f'保存分片失败: {str(e)}'}), 500
 
     if chunk_index == total_chunks - 1:
         safe_filename = secure_filename(filename)
         final_path = os.path.join(app.config['UPLOAD_FOLDER'], safe_filename)
         file_size = 0
-        with open(final_path, 'wb') as f:
-            for i in range(total_chunks):
-                chunk_file = os.path.join(chunk_dir, f'chunk-{i}')
-                with open(chunk_file, 'rb') as cf:
-                    chunk_data = cf.read()
-                    f.write(chunk_data)
-                    file_size += len(chunk_data)
+        try:
+            with open(final_path, 'wb') as f:
+                for i in range(total_chunks):
+                    chunk_file = os.path.join(chunk_dir, f'chunk-{i}')
+                    with open(chunk_file, 'rb') as cf:
+                        chunk_data = cf.read()
+                        f.write(chunk_data)
+                        file_size += len(chunk_data)
+        except Exception as e:
+            shutil.rmtree(chunk_dir, ignore_errors=True)
+            if os.path.exists(final_path):
+                os.remove(final_path)
+            return jsonify({'success': False, 'error': f'合并分片失败: {str(e)}'}), 500
+
+        # 验证完整文件的 MIME 类型
+        try:
+            with open(final_path, 'rb') as f:
+                file_data = f.read(2048)  # 检查前 2KB
+                if not allowed_file(filename, file_data):
+                    os.remove(final_path)
+                    shutil.rmtree(chunk_dir)
+                    return jsonify({'success': False, 'error': '不支持的文件类型'}), 400
+        except Exception as e:
+            shutil.rmtree(chunk_dir, ignore_errors=True)
+            if os.path.exists(final_path):
+                os.remove(final_path)
+            return jsonify({'success': False, 'error': f'文件验证失败: {str(e)}'}), 500
+
         if file_size > app.config['MAX_CONTENT_LENGTH']:
             os.remove(final_path)
             shutil.rmtree(chunk_dir)
             return jsonify({'success': False, 'error': '文件过大，最大200MB'}), 400
 
-        with open(final_path, 'rb') as f:
-            file_data = f.read()
-            md5_hash = hashlib.md5(file_data).hexdigest()
+        try:
+            with open(final_path, 'rb') as f:
+                file_data = f.read()
+                md5_hash = hashlib.md5(file_data).hexdigest()
+        except Exception as e:
+            shutil.rmtree(chunk_dir, ignore_errors=True)
+            if os.path.exists(final_path):
+                os.remove(final_path)
+            return jsonify({'success': False, 'error': f'计算 MD5 失败: {str(e)}'}), 500
 
         existing_note = Note.query.filter_by(user_id=user_id, md5=md5_hash).first()
         if existing_note:
             shutil.rmtree(chunk_dir)
             return jsonify({'success': False, 'error': '文件已存在，无需重复上传'}), 409
 
-        # 仅在非画廊模式下创建 Note 记录
         if not gallery_mode:
             content_type = 'image' if filename.lower().endswith(('.png', '.jpg', '.jpeg', '.gif')) else 'file'
             new_note = Note(
@@ -308,8 +336,15 @@ def upload_chunk():
                 md5=md5_hash,
                 timestamp=datetime.now(timezone.utc)
             )
-            db.session.add(new_note)
-            db.session.commit()
+            try:
+                db.session.add(new_note)
+                db.session.commit()
+            except Exception as e:
+                db.session.rollback()
+                shutil.rmtree(chunk_dir, ignore_errors=True)
+                if os.path.exists(final_path):
+                    os.remove(final_path)
+                return jsonify({'success': False, 'error': f'数据库保存失败: {str(e)}'}), 500
 
             shutil.rmtree(chunk_dir)
 
@@ -326,7 +361,6 @@ def upload_chunk():
                 }
             })
         else:
-            # 画廊模式仅返回文件路径
             shutil.rmtree(chunk_dir)
             return jsonify({
                 'success': True,
