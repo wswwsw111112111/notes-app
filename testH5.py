@@ -245,6 +245,7 @@ def add_note():
         print(f"Add note failed: Database error - {str(e)}")
         return jsonify({'success': False, 'error': f'数据库错误: {str(e)}'}), 500
 
+# 修改 /notes/upload_chunk 路由
 @app.route('/notes/upload_chunk', methods=['POST'])
 @login_required
 def upload_chunk():
@@ -254,6 +255,7 @@ def upload_chunk():
     chunk_index = int(request.form.get('chunkIndex'))
     total_chunks = int(request.form.get('totalChunks'))
     chunk_id = request.form.get('chunkId')
+    gallery_mode = request.form.get('gallery_mode', 'false').lower() == 'true'  # 新增参数
 
     if not chunk or not filename or not chunk_id:
         return jsonify({'success': False, 'error': '缺少必要参数'}), 400
@@ -294,33 +296,45 @@ def upload_chunk():
             shutil.rmtree(chunk_dir)
             return jsonify({'success': False, 'error': '文件已存在，无需重复上传'}), 409
 
-        content_type = 'image' if filename.lower().endswith(('.png', '.jpg', '.jpeg', '.gif')) else 'file'
-        new_note = Note(
-            user_id=user_id,
-            content_type=content_type,
-            content_data=safe_filename,
-            raw_content=filename,
-            file_size=file_size,
-            md5=md5_hash,
-            timestamp=datetime.now(timezone.utc)
-        )
-        db.session.add(new_note)
-        db.session.commit()
+        # 仅在非画廊模式下创建 Note 记录
+        if not gallery_mode:
+            content_type = 'image' if filename.lower().endswith(('.png', '.jpg', '.jpeg', '.gif')) else 'file'
+            new_note = Note(
+                user_id=user_id,
+                content_type=content_type,
+                content_data=safe_filename,
+                raw_content=filename,
+                file_size=file_size,
+                md5=md5_hash,
+                timestamp=datetime.now(timezone.utc)
+            )
+            db.session.add(new_note)
+            db.session.commit()
 
-        shutil.rmtree(chunk_dir)
+            shutil.rmtree(chunk_dir)
 
-        return jsonify({
-            'success': True,
-            'note': {
-                'id': new_note.id,
-                'type': new_note.content_type,
-                'content': url_for('uploaded_file', filename=new_note.content_data),
-                'raw_content': new_note.raw_content,
-                'timestamp': new_note.timestamp.isoformat(),
-                'file_size': new_note.file_size,
-                'md5': new_note.md5
-            }
-        })
+            return jsonify({
+                'success': True,
+                'note': {
+                    'id': new_note.id,
+                    'type': new_note.content_type,
+                    'content': url_for('uploaded_file', filename=new_note.content_data),
+                    'raw_content': new_note.raw_content,
+                    'timestamp': new_note.timestamp.isoformat(),
+                    'file_size': new_note.file_size,
+                    'md5': new_note.md5
+                }
+            })
+        else:
+            # 画廊模式仅返回文件路径
+            shutil.rmtree(chunk_dir)
+            return jsonify({
+                'success': True,
+                'content': url_for('uploaded_file', filename=safe_filename),
+                'filename': filename,
+                'file_size': file_size,
+                'md5': md5_hash
+            })
 
     return jsonify({'success': True, 'message': '分片上传成功'})
 

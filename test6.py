@@ -170,9 +170,7 @@ def add_note():
                 print("Add note failed: Invalid file data.")
                 return jsonify({'success': False, 'error': '无效的文件数据'}), 400
             file_data = base64.b64decode(content.split(',')[1])
-
             md5_hash = hashlib.md5(file_data).hexdigest()
-
             existing_note = Note.query.filter_by(user_id=user_id, md5=md5_hash).first()
             if existing_note:
                 print(f"Add note failed: File already exists (MD5: {md5_hash}).")
