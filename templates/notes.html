@@ -76,7 +76,7 @@
 .input-area img { max-width: 100px; max-height: 100px; vertical-align: middle; margin: 2px; }
 .editing .note-content p { display: none; }
 .editing textarea { width: 100%; min-height: 60px; display: block; margin-bottom: 5px; box-sizing: border-box; }
-.editing .btn-edit, .editing .btn-delete { display: none; }
+.editing .btn-edit, .editing .btn-delete { display: none !important; } /* 优化：强制隐藏编辑和删除按钮 */
 .editing .btn-save, .editing .btn-cancel { display: inline-block; }
 .modal {
     display: none;
@@ -87,7 +87,7 @@
     width: 100%;
     height: 100%;
     background-color: rgba(0, 0, 0, 0.8);
-    overflow: auto; /* 支持大图滚动 */
+    overflow: auto;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -310,7 +310,7 @@
     const CHUNK_SIZE = 1 * 1024 * 1024; // 1MB 分片大小
 
     let scale = 1;
-    const minScale = 0.1; // 优化：允许缩放到 10%
+    const minScale = 0.1;
     const maxScale = 3;
     const scaleStep = 0.1;
     let isDragging = false;
@@ -355,13 +355,11 @@
     document.addEventListener('keydown', (event) => {
         if (event.key === 'Escape' && modal.style.display === 'flex') {
             if (scale !== 1 || initialX !== 0 || initialY !== 0) {
-                // 第一次 ESC：恢复原始大小和位置
                 scale = 1;
                 initialX = 0;
                 initialY = 0;
                 modalImage.style.transform = `scale(${scale}) translate(${initialX}px, ${initialY}px)`;
             } else {
-                // 第二次 ESC：关闭模态框
                 modal.style.display = 'none';
                 modalImage.src = '';
                 modalImage.style.transform = 'scale(1) translate(0px, 0px)';
@@ -980,6 +978,7 @@
         const noteId = noteDiv.dataset.noteId;
 
         if (target.classList.contains('btn-edit')) {
+            if (noteDiv.classList.contains('editing')) return; // 优化：防止重复编辑
             noteDiv.classList.add('editing');
             const p = noteDiv.querySelector('.note-text');
             const rawText = p.dataset.rawText;
@@ -987,8 +986,6 @@
             textarea.value = rawText;
             p.after(textarea);
             textarea.focus();
-            noteDiv.querySelector('.btn-save').style.display = 'inline-block';
-            noteDiv.querySelector('.btn-cancel').style.display = 'inline-block';
         } else if (target.classList.contains('btn-save')) {
             const textarea = noteDiv.querySelector('textarea');
             const newContent = textarea.value.trim();
@@ -1014,10 +1011,6 @@
                     noteDiv.querySelector('.timestamp').textContent = new Date(result.new_timestamp).toLocaleString() + ' UTC';
                     noteDiv.classList.remove('editing');
                     textarea.remove();
-                    noteDiv.querySelector('.btn-save').style.display = 'none';
-                    noteDiv.querySelector('.btn-cancel').style.display = 'none';
-                    noteDiv.querySelector('.btn-edit').style.display = 'inline-block';
-                    noteDiv.querySelector('.btn-delete').style.display = 'inline-block';
                 } else {
                     alert('编辑失败: ' + (result.error || '未知错误'));
                 }
@@ -1028,10 +1021,6 @@
         } else if (target.classList.contains('btn-cancel')) {
             noteDiv.classList.remove('editing');
             noteDiv.querySelector('textarea').remove();
-            noteDiv.querySelector('.btn-save').style.display = 'none';
-            noteDiv.querySelector('.btn-cancel').style.display = 'none';
-            noteDiv.querySelector('.btn-edit').style.display = 'inline-block';
-            noteDiv.querySelector('.btn-delete').style.display = 'inline-block';
         } else if (target.classList.contains('btn-delete')) {
             if (!confirm('确定删除此笔记？')) return;
             try {
