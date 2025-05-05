@@ -76,7 +76,7 @@
 .input-area img { max-width: 100px; max-height: 100px; vertical-align: middle; margin: 2px; }
 .editing .note-content p { display: none; }
 .editing textarea { width: 100%; min-height: 60px; display: block; margin-bottom: 5px; box-sizing: border-box; }
-.editing .btn-edit, .editing .btn-delete { display: none !important; } /* 优化：强制隐藏编辑和删除按钮 */
+.editing .btn-edit, .editing .btn-delete { display: none !important; }
 .editing .btn-save, .editing .btn-cancel { display: inline-block; }
 .modal {
     display: none;
@@ -316,6 +316,7 @@
     let isDragging = false;
     let startX, startY, initialX = 0, initialY = 0;
     let pinchStartDistance = 0;
+    let currentEditingNote = null; // 跟踪当前编辑的笔记
 
     // --- 打开模态框 ---
     notesDisplay.addEventListener('click', (event) => {
@@ -978,14 +979,23 @@
         const noteId = noteDiv.dataset.noteId;
 
         if (target.classList.contains('btn-edit')) {
-            if (noteDiv.classList.contains('editing')) return; // 优化：防止重复编辑
+            if (currentEditingNote && currentEditingNote !== noteDiv) {
+                alert('请先保存或取消当前编辑的笔记！');
+                return;
+            }
+            if (noteDiv.classList.contains('editing')) return;
             noteDiv.classList.add('editing');
+            currentEditingNote = noteDiv; // 设置当前编辑的笔记
             const p = noteDiv.querySelector('.note-text');
             const rawText = p.dataset.rawText;
             const textarea = document.createElement('textarea');
             textarea.value = rawText;
             p.after(textarea);
             textarea.focus();
+            noteDiv.querySelector('.btn-save').style.display = 'inline-block';
+            noteDiv.querySelector('.btn-cancel').style.display = 'inline-block';
+            noteDiv.querySelector('.btn-edit').style.display = 'none';
+            noteDiv.querySelector('.btn-delete').style.display = 'none';
         } else if (target.classList.contains('btn-save')) {
             const textarea = noteDiv.querySelector('textarea');
             const newContent = textarea.value.trim();
@@ -1011,6 +1021,11 @@
                     noteDiv.querySelector('.timestamp').textContent = new Date(result.new_timestamp).toLocaleString() + ' UTC';
                     noteDiv.classList.remove('editing');
                     textarea.remove();
+                    noteDiv.querySelector('.btn-save').style.display = 'none';
+                    noteDiv.querySelector('.btn-cancel').style.display = 'none';
+                    noteDiv.querySelector('.btn-edit').style.display = 'inline-block';
+                    noteDiv.querySelector('.btn-delete').style.display = 'inline-block';
+                    currentEditingNote = null; // 清空当前编辑状态
                 } else {
                     alert('编辑失败: ' + (result.error || '未知错误'));
                 }
@@ -1021,6 +1036,11 @@
         } else if (target.classList.contains('btn-cancel')) {
             noteDiv.classList.remove('editing');
             noteDiv.querySelector('textarea').remove();
+            noteDiv.querySelector('.btn-save').style.display = 'none';
+            noteDiv.querySelector('.btn-cancel').style.display = 'none';
+            noteDiv.querySelector('.btn-edit').style.display = 'inline-block';
+            noteDiv.querySelector('.btn-delete').style.display = 'inline-block';
+            currentEditingNote = null; // 清空当前编辑状态
         } else if (target.classList.contains('btn-delete')) {
             if (!confirm('确定删除此笔记？')) return;
             try {
@@ -1053,7 +1073,7 @@
             const editingNote = document.querySelector('.note-entry.editing');
             if (editingNote) {
                 const saveButton = editingNote.querySelector('.btn-save');
-                if (saveButton) {
+                if (saveButton && saveButton.style.display !== 'none') {
                     saveButton.click();
                 }
             }
