@@ -87,7 +87,8 @@
     width: 100%;
     height: 100%;
     background-color: rgba(0, 0, 0, 0.8);
-    overflow: visible; /* 允许内容溢出 */
+    overflow: auto; /* 支持大图滚动 */
+    display: flex;
     justify-content: center;
     align-items: center;
 }
@@ -95,14 +96,12 @@
     position: relative;
     margin: 0;
     padding: 0;
-    width: auto;
-    height: auto; /* 移除高度限制 */
     text-align: center;
     background: none;
 }
 .modal-content img {
-    width: auto;
-    height: auto;
+    max-width: 100%;
+    max-height: 100%;
     object-fit: contain;
     transition: transform 0.2s;
     cursor: grab;
@@ -311,7 +310,7 @@
     const CHUNK_SIZE = 1 * 1024 * 1024; // 1MB 分片大小
 
     let scale = 1;
-    const minScale = 0.5;
+    const minScale = 0.1; // 优化：允许缩放到 10%
     const maxScale = 3;
     const scaleStep = 0.1;
     let isDragging = false;
@@ -326,7 +325,7 @@
             scale = 1;
             initialX = 0;
             initialY = 0;
-            modalImage.style.transform = `scale(${scale})`;
+            modalImage.style.transform = `scale(${scale}) translate(${initialX}px, ${initialY}px)`;
         }
     });
 
@@ -334,7 +333,10 @@
     closeBtn.addEventListener('click', () => {
         modal.style.display = 'none';
         modalImage.src = '';
-        modalImage.style.transform = 'scale(1)';
+        modalImage.style.transform = 'scale(1) translate(0px, 0px)';
+        scale = 1;
+        initialX = 0;
+        initialY = 0;
     });
 
     // --- 点击模态框外部关闭 ---
@@ -342,7 +344,28 @@
         if (event.target === modal) {
             modal.style.display = 'none';
             modalImage.src = '';
-            modalImage.style.transform = 'scale(1)';
+            modalImage.style.transform = 'scale(1) translate(0px, 0px)';
+            scale = 1;
+            initialX = 0;
+            initialY = 0;
+        }
+    });
+
+    // --- ESC 键处理 ---
+    document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && modal.style.display === 'flex') {
+            if (scale !== 1 || initialX !== 0 || initialY !== 0) {
+                // 第一次 ESC：恢复原始大小和位置
+                scale = 1;
+                initialX = 0;
+                initialY = 0;
+                modalImage.style.transform = `scale(${scale}) translate(${initialX}px, ${initialY}px)`;
+            } else {
+                // 第二次 ESC：关闭模态框
+                modal.style.display = 'none';
+                modalImage.src = '';
+                modalImage.style.transform = 'scale(1) translate(0px, 0px)';
+            }
         }
     });
 
@@ -363,18 +386,16 @@
     modalImage.addEventListener('wheel', (event) => {
         event.preventDefault();
         const rect = modalImage.getBoundingClientRect();
-        const mouseX = event.clientX - rect.left; // 鼠标相对图片左上角的 X 坐标
-        const mouseY = event.clientY - rect.top;  // 鼠标相对图片左上角的 Y 坐标
+        const mouseX = event.clientX - rect.left;
+        const mouseY = event.clientY - rect.top;
 
         const delta = event.deltaY > 0 ? -scaleStep : scaleStep;
         const newScale = Math.min(maxScale, Math.max(minScale, scale + delta));
         if (newScale === scale) return;
 
-        // 计算鼠标位置相对于图片中心的偏移（归一化到 [-0.5, 0.5]）
         const offsetX = (mouseX - rect.width / 2) / scale;
         const offsetY = (mouseY - rect.height / 2) / scale;
 
-        // 更新缩放后，调整平移以保持鼠标位置不变
         const scaleRatio = newScale / scale;
         initialX = initialX * scaleRatio - offsetX * (newScale - scale);
         initialY = initialY * scaleRatio - offsetY * (newScale - scale);
@@ -513,6 +534,10 @@
         const chunkSize = CHUNK_SIZE;
         const totalChunks = Math.ceil(file.size / chunkSize);
         const chunkId = `chunk-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+        const filename = file.name.toLowerCase();
+
+        console.log(`File selected: ${filename}`);
+
         const progressBar = document.getElementById('progressBar');
         const progressText = document.getElementById('progressText');
         const progressContainer = document.getElementById('uploadProgress');
@@ -527,11 +552,12 @@
             const chunk = file.slice(start, end);
 
             const formData = new FormData();
-            formData.append('chunk', chunk, file.name);
-            formData.append('filename', file.name);
+            formData.append('chunk', chunk, filename);
+            formData.append('filename', filename);
             formData.append('chunkIndex', i);
             formData.append('totalChunks', totalChunks);
             formData.append('chunkId', chunkId);
+            formData.append('gallery_mode', 'false');
 
             try {
                 const response = await fetch('/notes/upload_chunk', {
@@ -541,14 +567,22 @@
                     },
                     body: formData
                 });
-                const result = await response.json();
+
+                let result;
+                const responseClone = response.clone();
+                try {
+                    result = await response.json();
+                } catch (e) {
+                    const errorText = await responseClone.text();
+                    console.error(`Non-JSON response for ${filename}:`, errorText);
+                    alert(`服务器响应无效: ${filename}，错误: ${errorText || '未知错误'}`);
+                    progressContainer.style.display = 'none';
+                    return;
+                }
 
                 if (!result.success) {
-                    if (result.error === '不支持的文件类型') {
-                        alert('上传失败：不支持的文件类型。允许的类型：.png, .jpg, .jpeg, .gif, .pdf, .txt, .doc, .docx, .zip, .mp4');
-                    } else {
-                        alert('上传失败: ' + (result.error || '未知错误'));
-                    }
+                    console.error(`Upload failed for ${filename}: ${result.error}`);
+                    alert(`上传失败: ${result.error || '未知错误'} (文件: ${filename})`);
                     progressContainer.style.display = 'none';
                     return;
                 }
@@ -562,12 +596,13 @@
                     notesDisplay.scrollTop = notesDisplay.scrollHeight;
                 }
             } catch (error) {
-                console.error('Error uploading chunk:', error);
-                alert('上传分片时出错: ' + error.message);
+                console.error(`Error uploading chunk for ${filename}:`, error);
+                alert(`上传分片时出错: ${error.message} (文件: ${filename})`);
                 progressContainer.style.display = 'none';
                 return;
             }
         }
+
         progressContainer.style.display = 'none';
     }
 
@@ -615,7 +650,7 @@
                     });
 
                     let result;
-                    const responseClone = response.clone(); // 克隆响应避免重复读取
+                    const responseClone = response.clone();
                     try {
                         result = await response.json();
                     } catch (e) {
@@ -696,83 +731,6 @@
 
         progressContainer.style.display = 'none';
     }
-
-    async function uploadFileInChunks(file) {
-        const chunkSize = CHUNK_SIZE;
-        const totalChunks = Math.ceil(file.size / chunkSize);
-        const chunkId = `chunk-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-        const filename = file.name.toLowerCase();
-
-        console.log(`File selected: ${filename}`);
-
-        const progressBar = document.getElementById('progressBar');
-        const progressText = document.getElementById('progressText');
-        const progressContainer = document.getElementById('uploadProgress');
-
-        progressContainer.style.display = 'block';
-        progressBar.style.width = '0%';
-        progressText.textContent = '0%';
-
-        for (let i = 0; i < totalChunks; i++) {
-            const start = i * chunkSize;
-            const end = Math.min(start + chunkSize, file.size);
-            const chunk = file.slice(start, end);
-
-            const formData = new FormData();
-            formData.append('chunk', chunk, filename);
-            formData.append('filename', filename);
-            formData.append('chunkIndex', i);
-            formData.append('totalChunks', totalChunks);
-            formData.append('chunkId', chunkId);
-            formData.append('gallery_mode', 'false');
-
-            try {
-                const response = await fetch('/notes/upload_chunk', {
-                    method: 'POST',
-                    headers: {
-                        'X-CSRF-Token': csrfToken
-                    },
-                    body: formData
-                });
-
-                let result;
-                const responseClone = response.clone();
-                try {
-                    result = await response.json();
-                } catch (e) {
-                    const errorText = await responseClone.text();
-                    console.error(`Non-JSON response for ${filename}:`, errorText);
-                    alert(`服务器响应无效: ${filename}，错误: ${errorText || '未知错误'}`);
-                    progressContainer.style.display = 'none';
-                    return;
-                }
-
-                if (!result.success) {
-                    console.error(`Upload failed for ${filename}: ${result.error}`);
-                    alert(`上传失败: ${result.error || '未知错误'} (文件: ${filename})`);
-                    progressContainer.style.display = 'none';
-                    return;
-                }
-
-                const progress = Math.round(((i + 1) / totalChunks) * 100);
-                progressBar.style.width = `${progress}%`;
-                progressText.textContent = `${progress}%`;
-
-                if (i === totalChunks - 1 && result.note) {
-                    addNoteToDisplay(result.note);
-                    notesDisplay.scrollTop = notesDisplay.scrollHeight;
-                }
-            } catch (error) {
-                console.error(`Error uploading chunk for ${filename}:`, error);
-                alert(`上传分片时出错: ${error.message} (文件: ${filename})`);
-                progressContainer.style.display = 'none';
-                return;
-            }
-        }
-
-        progressContainer.style.display = 'none';
-    }
-
 
     // --- 画廊滑动功能 ---
     document.addEventListener('DOMContentLoaded', () => {
@@ -1029,7 +987,6 @@
             textarea.value = rawText;
             p.after(textarea);
             textarea.focus();
-            // 确保保存和取消按钮显示
             noteDiv.querySelector('.btn-save').style.display = 'inline-block';
             noteDiv.querySelector('.btn-cancel').style.display = 'inline-block';
         } else if (target.classList.contains('btn-save')) {
@@ -1057,7 +1014,6 @@
                     noteDiv.querySelector('.timestamp').textContent = new Date(result.new_timestamp).toLocaleString() + ' UTC';
                     noteDiv.classList.remove('editing');
                     textarea.remove();
-                    // 恢复按钮状态
                     noteDiv.querySelector('.btn-save').style.display = 'none';
                     noteDiv.querySelector('.btn-cancel').style.display = 'none';
                     noteDiv.querySelector('.btn-edit').style.display = 'inline-block';
@@ -1072,7 +1028,6 @@
         } else if (target.classList.contains('btn-cancel')) {
             noteDiv.classList.remove('editing');
             noteDiv.querySelector('textarea').remove();
-            // 恢复按钮状态
             noteDiv.querySelector('.btn-save').style.display = 'none';
             noteDiv.querySelector('.btn-cancel').style.display = 'none';
             noteDiv.querySelector('.btn-edit').style.display = 'inline-block';
@@ -1105,12 +1060,12 @@
     // --- Ctrl+S 快捷键保存 ---
     document.addEventListener('keydown', (event) => {
         if (event.ctrlKey && event.key === 's') {
-            event.preventDefault(); // 阻止浏览器默认保存行为
+            event.preventDefault();
             const editingNote = document.querySelector('.note-entry.editing');
             if (editingNote) {
                 const saveButton = editingNote.querySelector('.btn-save');
                 if (saveButton) {
-                    saveButton.click(); // 触发保存按钮的点击事件
+                    saveButton.click();
                 }
             }
         }
