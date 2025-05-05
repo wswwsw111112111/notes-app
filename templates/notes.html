@@ -11,8 +11,11 @@
         max-width: 100%;
     }
     .gallery img {
-        flex: 0 0 100%;
-        width: 100%;
+        flex: 0 0 33.33%;
+        width: 33.33%;
+        height: auto;
+        object-fit: cover;
+        cursor: pointer;
     }
 }
 
@@ -316,7 +319,7 @@
     let isDragging = false;
     let startX, startY, initialX = 0, initialY = 0;
     let pinchStartDistance = 0;
-    let currentEditingNote = null; // 跟踪当前编辑的笔记
+    let currentEditingNote = null;
 
     // --- 打开模态框 ---
     notesDisplay.addEventListener('click', (event) => {
@@ -378,6 +381,41 @@
         // 初始隐藏保存和取消按钮
         document.querySelectorAll('.note-actions .btn-save, .note-actions .btn-cancel').forEach(btn => {
             btn.style.display = 'none';
+        });
+
+        // 画廊滑动功能
+        notesDisplay.addEventListener('click', (event) => {
+            const arrow = event.target.closest('.gallery-arrow');
+            if (!arrow) return;
+
+            const container = arrow.closest('.gallery-container');
+            const gallery = container.querySelector('.gallery');
+            const images = JSON.parse(container.dataset.images);
+            const leftArrow = container.querySelector('.arrow-left');
+            const rightArrow = container.querySelector('.arrow-right');
+            let currentPage = parseInt(container.dataset.currentPage || 0, 10);
+            const imagesPerPage = 3;
+            const totalPages = Math.ceil(images.length / imagesPerPage);
+
+            if (arrow.classList.contains('arrow-left')) {
+                if (currentPage > 0) {
+                    currentPage--;
+                }
+            } else if (arrow.classList.contains('arrow-right')) {
+                if (currentPage < totalPages - 1) {
+                    currentPage++;
+                }
+            }
+
+            const updateGallery = () => {
+                const offset = -currentPage * 100;
+                gallery.style.transform = `translateX(${offset}%)`;
+                leftArrow.style.display = currentPage === 0 ? 'none' : 'block';
+                rightArrow.style.display = currentPage === totalPages - 1 ? 'none' : 'block';
+                container.dataset.currentPage = currentPage;
+            };
+
+            updateGallery();
         });
     });
 
@@ -738,43 +776,25 @@
             const images = JSON.parse(container.dataset.images);
             const leftArrow = container.querySelector('.arrow-left');
             const rightArrow = container.querySelector('.arrow-right');
-            let currentPage = 0;
+            let currentPage = parseInt(container.dataset.currentPage || 0, 10);
             const imagesPerPage = 3;
             const totalPages = Math.ceil(images.length / imagesPerPage);
 
             const updateGallery = () => {
                 const offset = -currentPage * 100;
                 gallery.style.transform = `translateX(${offset}%)`;
-
                 leftArrow.style.display = currentPage === 0 ? 'none' : 'block';
                 rightArrow.style.display = currentPage === totalPages - 1 ? 'none' : 'block';
-
-                gallery.innerHTML = '';
-                const start = currentPage * imagesPerPage;
-                const end = Math.min(start + imagesPerPage, images.length);
-                for (let i = start; i < end; i++) {
-                    const img = document.createElement('img');
-                    img.src = images[i];
-                    img.alt = '画廊图片';
-                    img.dataset.fullSrc = images[i];
-                    img.loading = 'lazy';
-                    gallery.appendChild(img);
-                }
+                container.dataset.currentPage = currentPage;
             };
 
-            leftArrow.addEventListener('click', () => {
-                if (currentPage > 0) {
-                    currentPage--;
-                    updateGallery();
-                }
-            });
+            // 初始填充所有图片
+            if (gallery.children.length < images.length) {
+                gallery.innerHTML = images.map(img => `<img src="${img}" alt="画廊图片" data-full-src="${img}" loading="lazy">`).join('');
+            }
 
-            rightArrow.addEventListener('click', () => {
-                if (currentPage < totalPages - 1) {
-                    currentPage++;
-                    updateGallery();
-                }
-            });
+            // 限制显示的图片数量
+            updateGallery();
 
             let touchStartX = 0;
             gallery.addEventListener('touchstart', (e) => {
@@ -792,6 +812,39 @@
                     updateGallery();
                 }
             });
+        });
+
+        // 事件委托处理箭头点击
+        notesDisplay.addEventListener('click', (event) => {
+            const arrow = event.target.closest('.gallery-arrow');
+            if (!arrow) return;
+
+            const container = arrow.closest('.gallery-container');
+            const gallery = container.querySelector('.gallery');
+            const images = JSON.parse(container.dataset.images);
+            const leftArrow = container.querySelector('.arrow-left');
+            const rightArrow = container.querySelector('.arrow-right');
+            let currentPage = parseInt(container.dataset.currentPage || 0, 10);
+            const imagesPerPage = 3;
+            const totalPages = Math.ceil(images.length / imagesPerPage);
+
+            if (arrow.classList.contains('arrow-left')) {
+                if (currentPage > 0) {
+                    currentPage--;
+                }
+            } else if (arrow.classList.contains('arrow-right')) {
+                if (currentPage < totalPages - 1) {
+                    currentPage++;
+                }
+            }
+
+            const updateGallery = () => {
+                const offset = -currentPage * 100;
+                gallery.style.transform = `translateX(${offset}%)`;
+                leftArrow.style.display = currentPage === 0 ? 'none' : 'block';
+                rightArrow.style.display = currentPage === totalPages - 1 ? 'none' : 'block';
+                container.dataset.currentPage = currentPage;
+            };
 
             updateGallery();
         });
@@ -944,10 +997,11 @@
             const galleryContainer = document.createElement('div');
             galleryContainer.className = 'gallery-container';
             galleryContainer.dataset.images = JSON.stringify(images);
+            galleryContainer.dataset.currentPage = '0';
             galleryContainer.innerHTML = `
                 <button class="gallery-arrow arrow-left" style="display: none;">←</button>
                 <div class="gallery">
-                    ${images.slice(0, 3).map(img => `<img src="${img}" alt="画廊图片" data-full-src="${img}" loading="lazy">`).join('')}
+                    ${images.map(img => `<img src="${img}" alt="画廊图片" data-full-src="${img}" loading="lazy">`).join('')}
                 </div>
                 <button class="gallery-arrow arrow-right" style="${images.length <= 3 ? 'display: none;' : ''}">→</button>
             `;
@@ -985,7 +1039,7 @@
             }
             if (noteDiv.classList.contains('editing')) return;
             noteDiv.classList.add('editing');
-            currentEditingNote = noteDiv; // 设置当前编辑的笔记
+            currentEditingNote = noteDiv;
             const p = noteDiv.querySelector('.note-text');
             const rawText = p.dataset.rawText;
             const textarea = document.createElement('textarea');
@@ -1025,7 +1079,7 @@
                     noteDiv.querySelector('.btn-cancel').style.display = 'none';
                     noteDiv.querySelector('.btn-edit').style.display = 'inline-block';
                     noteDiv.querySelector('.btn-delete').style.display = 'inline-block';
-                    currentEditingNote = null; // 清空当前编辑状态
+                    currentEditingNote = null;
                 } else {
                     alert('编辑失败: ' + (result.error || '未知错误'));
                 }
@@ -1040,7 +1094,7 @@
             noteDiv.querySelector('.btn-cancel').style.display = 'none';
             noteDiv.querySelector('.btn-edit').style.display = 'inline-block';
             noteDiv.querySelector('.btn-delete').style.display = 'inline-block';
-            currentEditingNote = null; // 清空当前编辑状态
+            currentEditingNote = null;
         } else if (target.classList.contains('btn-delete')) {
             if (!confirm('确定删除此笔记？')) return;
             try {
