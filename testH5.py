@@ -62,7 +62,6 @@ class Note(db.Model):
     def __repr__(self):
         return f'<Note {self.id} {self.content_type}>'
 
-
 def allowed_file(filename, file_content=None):
     # 规范化扩展名，始终转换为小写
     ext = os.path.splitext(filename)[1].lower()
@@ -95,6 +94,7 @@ def allowed_file(filename, file_content=None):
         # 捕获 python-magic 异常，依赖扩展名
         print(f"MIME check failed for {filename}: {str(e)}")
         return ext in ALLOWED_EXTENSIONS
+
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
@@ -109,6 +109,7 @@ def login_required(f):
         session.modified = True
         return f(*args, **kwargs)
     return decorated_function
+
 @app.route('/')
 def index():
     return redirect(url_for('login'))
@@ -156,24 +157,20 @@ def logout():
     print("Logout successful: Session cleared.")
     return redirect(url_for('login'))
 
-@app.route('/notes')
-@app.route('/notes/<int:page>')
+@app.route('/notes', defaults={'page': 1})
+@app.route('/notes/page/<int:page>')
 @login_required
-def notes_page(page=1):
-    per_page = 20
-    user_id = current_user.id
-    pagination = Note.query.filter_by(user_id=user_id).order_by(Note.id.asc()).paginate(page=page, per_page=per_page, error_out=False)
-    user_notes = pagination.items
-    print(f"Notes page loaded: user_id={user_id}, page={page}, number of notes={len(user_notes)}")
-    for note in user_notes:
-        if note.content_type == 'gallery' and isinstance(note.content_data, str):
-            try:
-                note.content_data = json.loads(note.content_data)
-            except Exception as e:
-                print(f"Error parsing gallery content_data for note ID {note.id}: {str(e)}")
-                note.content_data = [note.content_data]
+def notes_page(page):
+    print(f"Session active: user_id={current_user.id}, username={current_user.username}")
+    per_page = 10
+    pagination = Note.query.filter_by(user_id=current_user.id).order_by(Note.timestamp.desc()).paginate(page=page, per_page=per_page, error_out=False)
+    notes = pagination.items
+
+    print(f"Notes page loaded: user_id={current_user.id}, page={page}, number of notes={len(notes)}")
+    for note in notes:
         print(f"Note ID: {note.id}, Type: {note.content_type}, Content: {note.content_data}, Timestamp: {note.timestamp}")
-    return render_template('notes.html', notes=user_notes, username=session.get('username'), pagination=pagination)
+
+    return render_template('notes.html', notes=notes, pagination=pagination)
 
 @app.route('/notes/add', methods=['POST'])
 @login_required
@@ -258,7 +255,6 @@ def upload_chunk():
     chunk_index = int(request.form.get('chunkIndex', -1))
     total_chunks = int(request.form.get('totalChunks', -1))
     chunk_id = request.form.get('chunkId')
-    gallery_mode = request.form.get('gallery_mode', 'false').lower() == 'true'
 
     if not chunk or not filename or chunk_index < 0 or total_chunks < 0 or not chunk_id:
         return jsonify({'success': False, 'error': '缺少必要参数或参数无效'}), 400
@@ -294,7 +290,7 @@ def upload_chunk():
         # 验证完整文件的 MIME 类型
         try:
             with open(final_path, 'rb') as f:
-                file_data = f.read(2048)  # 检查前 2KB
+                file_data = f.read(2048)
                 if not allowed_file(filename, file_data):
                     os.remove(final_path)
                     shutil.rmtree(chunk_dir)
@@ -325,50 +321,40 @@ def upload_chunk():
             shutil.rmtree(chunk_dir)
             return jsonify({'success': False, 'error': '文件已存在，无需重复上传'}), 409
 
-        if not gallery_mode:
-            content_type = 'image' if filename.lower().endswith(('.png', '.jpg', '.jpeg', '.gif')) else 'file'
-            new_note = Note(
-                user_id=user_id,
-                content_type=content_type,
-                content_data=safe_filename,
-                raw_content=filename,
-                file_size=file_size,
-                md5=md5_hash,
-                timestamp=datetime.now(timezone.utc)
-            )
-            try:
-                db.session.add(new_note)
-                db.session.commit()
-            except Exception as e:
-                db.session.rollback()
-                shutil.rmtree(chunk_dir, ignore_errors=True)
-                if os.path.exists(final_path):
-                    os.remove(final_path)
-                return jsonify({'success': False, 'error': f'数据库保存失败: {str(e)}'}), 500
+        content_type = 'image' if filename.lower().endswith(('.png', '.jpg', '.jpeg', '.gif')) else 'file'
+        new_note = Note(
+            user_id=user_id,
+            content_type=content_type,
+            content_data=safe_filename,
+            raw_content=filename,
+            file_size=file_size,
+            md5=md5_hash,
+            timestamp=datetime.now(timezone.utc)
+        )
+        try:
+            db.session.add(new_note)
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            shutil.rmtree(chunk_dir, ignore_errors=True)
+            if os.path.exists(final_path):
+                os.remove(final_path)
+            return jsonify({'success': False, 'error': f'数据库保存失败: {str(e)}'}), 500
 
-            shutil.rmtree(chunk_dir)
+        shutil.rmtree(chunk_dir)
 
-            return jsonify({
-                'success': True,
-                'note': {
-                    'id': new_note.id,
-                    'type': new_note.content_type,
-                    'content': url_for('uploaded_file', filename=new_note.content_data),
-                    'raw_content': new_note.raw_content,
-                    'timestamp': new_note.timestamp.isoformat(),
-                    'file_size': new_note.file_size,
-                    'md5': new_note.md5
-                }
-            })
-        else:
-            shutil.rmtree(chunk_dir)
-            return jsonify({
-                'success': True,
-                'content': url_for('uploaded_file', filename=safe_filename),
-                'filename': filename,
-                'file_size': file_size,
-                'md5': md5_hash
-            })
+        return jsonify({
+            'success': True,
+            'note': {
+                'id': new_note.id,
+                'type': new_note.content_type,
+                'content': url_for('uploaded_file', filename=new_note.content_data),
+                'raw_content': new_note.raw_content,
+                'timestamp': new_note.timestamp.isoformat(),
+                'file_size': new_note.file_size,
+                'md5': new_note.md5
+            }
+        })
 
     return jsonify({'success': True, 'message': '分片上传成功'})
 
@@ -383,52 +369,36 @@ def add_multiple():
 
     mode = data['mode']
     file_paths = data['file_paths']
-    new_note = Note(user_id=user_id, timestamp=datetime.now(timezone.utc))
+    if mode != 'gallery':  # 仅支持 gallery 模式，后续改为逐个添加
+        return jsonify({'success': False, 'error': '不支持的模式'}), 400
 
     try:
-        if mode == 'zip':
-            zip_filename = f"images_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}.zip"
-            zip_path = os.path.join(app.config['UPLOAD_FOLDER'], zip_filename)
-            with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
-                for file_path in file_paths:
-                    full_path = os.path.join(app.config['UPLOAD_FOLDER'], file_path.split('/')[-1])
-                    if os.path.exists(full_path):
-                        zipf.write(full_path, os.path.basename(full_path))
-            with open(zip_path, 'rb') as f:
+        for file_path in file_paths:
+            safe_filename = os.path.basename(file_path)
+            full_path = os.path.join(app.config['UPLOAD_FOLDER'], safe_filename)
+            if not os.path.exists(full_path):
+                continue
+            file_size = os.path.getsize(full_path)
+            with open(full_path, 'rb') as f:
                 file_data = f.read()
                 md5_hash = hashlib.md5(file_data).hexdigest()
-            new_note.content_type = 'zip'
-            new_note.content_data = zip_filename
-            new_note.raw_content = zip_filename
-            new_note.file_size = len(file_data)
-            new_note.md5 = md5_hash
-        else:  # mode == 'gallery'
-            new_note.content_type = 'gallery'
-            new_note.content_data = json.dumps(file_paths)  # 存储为 JSON 字符串
-            new_note.raw_content = '画廊'
-            total_size = 0
-            for file_path in file_paths:
-                full_path = os.path.join(app.config['UPLOAD_FOLDER'], file_path.split('/')[-1])
-                if os.path.exists(full_path):
-                    total_size += os.path.getsize(full_path)
-            new_note.file_size = total_size
-            new_note.md5 = hashlib.md5(str(file_paths).encode()).hexdigest()
 
-        db.session.add(new_note)
+            existing_note = Note.query.filter_by(user_id=user_id, md5=md5_hash).first()
+            if not existing_note:
+                new_note = Note(
+                    user_id=user_id,
+                    content_type='image',
+                    content_data=safe_filename,
+                    raw_content=safe_filename,
+                    file_size=file_size,
+                    md5=md5_hash,
+                    timestamp=datetime.now(timezone.utc)
+                )
+                db.session.add(new_note)
+
         db.session.commit()
-        print(f"Multiple notes added successfully: ID={new_note.id}, Type={new_note.content_type}, User ID={user_id}")
-        return jsonify({
-            'success': True,
-            'note': {
-                'id': new_note.id,
-                'type': new_note.content_type,
-                'content': file_paths if mode == 'gallery' else url_for('uploaded_file', filename=new_note.content_data),
-                'raw_content': new_note.raw_content,
-                'timestamp': new_note.timestamp.isoformat(),
-                'file_size': new_note.file_size,
-                'md5': new_note.md5
-            }
-        })
+        print(f"Multiple notes added successfully: User ID={user_id}")
+        return jsonify({'success': True})
     except Exception as e:
         db.session.rollback()
         print(f"Add multiple notes failed: Database error - {str(e)}")
@@ -479,13 +449,6 @@ def delete_note(note_id):
             if os.path.exists(file_path):
                 os.remove(file_path)
                 print(f"File deleted: {file_path}")
-        elif note.content_type == 'gallery':
-            file_paths = json.loads(note.content_data) if note.content_data.startswith('[') else [note.content_data]
-            for file_path in file_paths:
-                full_path = os.path.join(app.config['UPLOAD_FOLDER'], file_path.split('/')[-1])
-                if os.path.exists(full_path):
-                    os.remove(full_path)
-                    print(f"File deleted: {full_path}")
         db.session.delete(note)
         db.session.commit()
         print(f"Note deleted successfully: ID={note_id}")
@@ -497,6 +460,10 @@ def delete_note(note_id):
 
 @app.route('/uploads/<filename>')
 def uploaded_file(filename):
+    file_path = os.path.join(app.config['UPLOAD_FOLDER'], secure_filename(filename))
+    if not os.path.exists(file_path):
+        print(f"File not found: {file_path}")
+        return jsonify({'error': '文件不存在'}), 404
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 
 if __name__ == '__main__':

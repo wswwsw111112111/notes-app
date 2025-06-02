@@ -10,13 +10,6 @@
     .note-entry .note-content img {
         max-width: 100%;
     }
-    .gallery img {
-        flex: 0 0 33.33%;
-        width: 33.33%;
-        height: auto;
-        object-fit: cover;
-        cursor: pointer;
-    }
 }
 
 .notes-container {
@@ -69,12 +62,19 @@
 }
 .note-entry .note-content a { color: #007bff; text-decoration: underline; }
 .note-entry .note-content p { margin: 0; white-space: pre-wrap; word-wrap: break-word; }
+.note-entry .note-content .gallery-icon {
+    font-size: 1.5em;
+    color: #555;
+    cursor: pointer;
+    vertical-align: middle;
+}
 .note-actions { position: absolute; top: 5px; right: 10px; display: none; }
 .note-entry:hover .note-actions { display: inline-block; }
 .note-actions button { background: none; border: none; cursor: pointer; padding: 2px 5px; font-size: 0.9em; margin-left: 5px; }
 .note-actions .btn-edit { color: blue; }
 .note-actions .btn-delete { color: red; }
 .note-actions .btn-save, .note-actions .btn-cancel { font-size: 0.8em; }
+.note-actions .btn-download { color: green; font-size: 0.9em; margin-left: 5px; text-decoration: none; }
 .input-area:empty::before { content: "在此输入笔记内容，可直接粘贴图片或点击加号上传文件..."; color: #aaa; }
 .input-area img { max-width: 100px; max-height: 100px; vertical-align: middle; margin: 2px; }
 .editing .note-content p { display: none; }
@@ -103,13 +103,12 @@
     background: none;
 }
 .modal-content img {
-    max-width: 100%;
-    max-height: 100%;
+    max-width: 90vw;
+    max-height: 90vh;
     object-fit: contain;
     transition: transform 0.2s;
     cursor: grab;
     user-select: none;
-    touch-action: pinch-zoom;
 }
 .close-btn {
     color: #fff;
@@ -119,6 +118,16 @@
     left: 20px;
     cursor: pointer;
 }
+.prev-btn, .next-btn {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #fff;
+    font-size: 2em;
+    cursor: pointer;
+}
+.prev-btn { left: 10px; }
+.next-btn { right: 10px; }
 .file-size, .file-md5 {
     font-size: 0.8em;
     color: #888;
@@ -167,54 +176,20 @@
     right: 10px;
     z-index: 10;
 }
-.gallery-container {
-    position: relative;
-    width: 100%;
-    overflow: hidden;
-}
-.gallery {
-    display: flex;
-    transition: transform 0.3s ease;
-    width: 100%;
-}
-.gallery img {
-    flex: 0 0 33.33%;
-    width: 33.33%;
-    height: auto;
-    object-fit: cover;
-    cursor: pointer;
-}
-.gallery-arrow {
-    position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
-    background: rgba(0, 0, 0, 0.5);
-    color: white;
-    border: none;
-    padding: 10px;
-    cursor: pointer;
-    z-index: 10;
-}
-.arrow-left {
-    left: 0;
-}
-.arrow-right {
-    right: 0;
+.additional-text {
+    margin-top: 5px;
+    color: #555;
 }
 </style>
 
 <div class="notes-container">
     <div class="notes-display" id="notesDisplay">
-        <!-- Debugging: Log the number of notes -->
-        <div style="display: none;">
-            {{ "Notes count: " ~ notes|length }}
-        </div>
         {% if notes %}
             {% for note in notes %}
             <div class="note-entry" id="note-{{ note.id }}" data-note-id="{{ note.id }}">
                 <span class="timestamp">
                     {{ note.timestamp.strftime('%Y-%m-%d %H:%M:%S UTC') }}
-                    {% if note.content_type in ['image', 'file', 'gallery', 'zip'] %}
+                    {% if note.content_type in ['image', 'file', 'zip', 'gallery'] %}
                         {% if note.md5 %}
                             <span class="file-md5">MD5: {{ note.md5 }}</span>
                         {% endif %}
@@ -227,32 +202,27 @@
                     {% if note.content_type == 'text' %}
                         <p class="note-text" data-raw-text="{{ note.content_data | e }}">{{ note.content_data | urlize | safe }}</p>
                     {% elif note.content_type == 'image' %}
-                        <img src="{{ url_for('uploaded_file', filename=note.content_data) }}" alt="笔记图片" data-full-src="{{ url_for('uploaded_file', filename=note.content_data) }}">
+                        <img src="{{ url_for('uploaded_file', filename=note.content_data) }}" alt="笔记图片" data-full-src="{{ url_for('uploaded_file', filename=note.content_data) }}" loading="lazy">
                     {% elif note.content_type == 'file' or note.content_type == 'zip' %}
-                        <a href="{{ url_for('uploaded_file', filename=note.content_data) }}" target="_blank">{{ note.content_data }}</a>
+                        <a href="{{ url_for('download_zip', note_id=note.id) if note.content_type == 'zip' else url_for('uploaded_file', filename=note.content_data) }}" target="_blank">{{ note.raw_content or note.content_data }}</a>
                     {% elif note.content_type == 'gallery' %}
-                        <div class="gallery-container" data-images="{{ note.content_data | tojson }}">
-                            <button class="gallery-arrow arrow-left" style="display: none;">←</button>
-                            <div class="gallery">
-                                {% set images = note.content_data %}
-                                {% if images is string %}
-                                    {% set images = images | fromjson %}
-                                {% endif %}
-                                {% for img in images[:3] %}
-                                    <img src="{{ url_for('uploaded_file', filename=img.split('/')[-1]) }}" alt="画廊图片" data-full-src="{{ url_for('uploaded_file', filename=img.split('/')[-1]) }}" loading="lazy">
-                                {% endfor %}
-                            </div>
-                            <button class="gallery-arrow arrow-right" style="{% if images|length <= 3 %}display: none;{% endif %}">→</button>
-                        </div>
+                        <a href="{{ url_for('gallery_page', note_id=note.id) }}" class="gallery-icon" title="查看画廊">📁 画廊 ({{ note.content_data | fromjson | length }} 张图片)</a>
+                    {% endif %}
+                    {% if note.additional_text %}
+                        <p class="additional-text">{{ note.additional_text | urlize | safe }}</p>
                     {% endif %}
                 </div>
                 <div class="note-actions">
-                    {% if note.content_type == 'text' %}
-                        <button class="btn-edit" title="编辑">✎</button>
-                        <button class="btn-save" title="保存">✔</button>
-                        <button class="btn-cancel" title="取消">✖</button>
-                    {% endif %}
+                    <button class="btn-edit" title="编辑">✎</button>
+                    <button class="btn-save" title="保存" style="display: none;">✔</button>
+                    <button class="btn-cancel" title="取消" style="display: none;">✖</button>
                     <button class="btn-delete" title="删除">🗑</button>
+                    {% if note.content_type == 'gallery' %}
+                        <a href="{{ url_for('download_gallery', note_id=note.id) }}" class="btn-download" title="一键下载">📥</a>
+                    {% endif %}
+                    {% if note.content_type == 'zip' %}
+                        <a href="{{ url_for('download_zip', note_id=note.id) }}" class="btn-download" title="一键下载">📥</a>
+                    {% endif %}
                 </div>
             </div>
             {% endfor %}
@@ -273,15 +243,15 @@
     </div>
     {% endif %}
 
-    <div class="input-area" id="noteInput" contenteditable="true">
-    </div>
+    <div class="input-area" id="noteInput" contenteditable="true"></div>
     <span class="upload-btn" title="上传文件">➕</span>
     <div class="upload-options">
         <select id="uploadMode">
-            <option value="single">单张上传</option>
+            <option value="file">单张上传</option>
             <option value="gallery">多张图片上传</option>
             <option value="zip">压缩上传</option>
         </select>
+        <textarea id="additionalText" placeholder="添加备注或说明（可选）" rows="2" style="width: 200px; margin-top: 5px;"></textarea>
     </div>
     <input type="file" id="fileUpload" style="display: none;" accept=".png,.jpg,.jpeg,.gif,.pdf,.txt,.doc,.docx,.zip,.mp4" multiple>
 </div>
@@ -291,15 +261,18 @@
     <div class="upload-progress-text" id="progressText">0%</div>
 </div>
 
-<div id="imageModal" class="modal">
+<div id="imageModal" class="modal" style="display: none;">
     <span class="close-btn" title="关闭">×</span>
     <div class="modal-content">
+        <button class="prev-btn">←</button>
         <img id="modalImage" src="" alt="图片预览">
+        <button class="next-btn">→</button>
     </div>
 </div>
 {% endblock %}
 
 {% block scripts %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script>
     const csrfToken = "{{ csrf_token() }}";
     const noteInput = document.getElementById('noteInput');
@@ -307,10 +280,11 @@
     const fileUpload = document.getElementById('fileUpload');
     const uploadBtn = document.querySelector('.upload-btn');
     const uploadMode = document.getElementById('uploadMode');
+    const additionalText = document.getElementById('additionalText'); // 添加附加文本输入框引用
     const modal = document.getElementById('imageModal');
     const modalImage = document.getElementById('modalImage');
     const closeBtn = document.querySelector('.close-btn');
-    const CHUNK_SIZE = 1 * 1024 * 1024; // 1MB 分片大小
+    const CHUNK_SIZE = 5 * 1024 * 1024; // 5MB
 
     let scale = 1;
     const minScale = 0.1;
@@ -320,106 +294,94 @@
     let startX, startY, initialX = 0, initialY = 0;
     let pinchStartDistance = 0;
     let currentEditingNote = null;
+    let currentGalleryImages = [];
+    let currentImageIndex = 0;
 
-    // --- 打开模态框 ---
-    notesDisplay.addEventListener('click', (event) => {
-        if (event.target.tagName === 'IMG' && event.target.dataset.fullSrc) {
-            modal.style.display = 'flex';
-            modalImage.src = event.target.dataset.fullSrc;
-            scale = 1;
-            initialX = 0;
-            initialY = 0;
-            modalImage.style.transform = `scale(${scale}) translate(${initialX}px, ${initialY}px)`;
+    document.addEventListener('DOMContentLoaded', () => {
+        if (modal) {
+            modal.style.display = 'none';
+        } else {
+            console.error('Modal element not found');
         }
-    });
 
-    // --- 关闭模态框 ---
-    closeBtn.addEventListener('click', () => {
-        modal.style.display = 'none';
-        modalImage.src = '';
-        modalImage.style.transform = 'scale(1) translate(0px, 0px)';
-        scale = 1;
-        initialX = 0;
-        initialY = 0;
-    });
+        notesDisplay.addEventListener('click', (event) => {
+            if (event.target.tagName === 'IMG' && event.target.dataset.fullSrc) {
+                const noteDiv = event.target.closest('.note-entry');
+                currentGalleryImages = [event.target.dataset.fullSrc];
+                currentImageIndex = 0;
+                modal.style.display = 'flex';
+                modalImage.src = currentGalleryImages[currentImageIndex];
+                scale = 1;
+                initialX = 0;
+                initialY = 0;
+                modalImage.style.transform = `scale(${scale}) translate(${initialX}px, ${initialY}px)`;
+            }
+        });
 
-    // --- 点击模态框外部关闭 ---
-    modal.addEventListener('click', (event) => {
-        if (event.target === modal) {
+        closeBtn.addEventListener('click', () => {
             modal.style.display = 'none';
             modalImage.src = '';
             modalImage.style.transform = 'scale(1) translate(0px, 0px)';
             scale = 1;
             initialX = 0;
             initialY = 0;
-        }
-    });
+            currentGalleryImages = [];
+            currentImageIndex = 0;
+        });
 
-    // --- ESC 键处理 ---
-    document.addEventListener('keydown', (event) => {
-        if (event.key === 'Escape' && modal.style.display === 'flex') {
-            if (scale !== 1 || initialX !== 0 || initialY !== 0) {
+        modal.addEventListener('click', (event) => {
+            if (event.target === modal) {
+                modal.style.display = 'none';
+                modalImage.src = '';
+                modalImage.style.transform = 'scale(1) translate(0px, 0px)';
+                scale = 1;
+                initialX = 0;
+                initialY = 0;
+                currentGalleryImages = [];
+                currentImageIndex = 0;
+            }
+        });
+
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape' && modal.style.display === 'flex') {
+                if (scale !== 1 || initialX !== 0 || initialY !== 0) {
+                    scale = 1;
+                    initialX = 0;
+                    initialY = 0;
+                    modalImage.style.transform = `scale(${scale}) translate(${initialX}px, ${initialY}px)`;
+                } else {
+                    modal.style.display = 'none';
+                    modalImage.src = '';
+                    modalImage.style.transform = 'scale(1) translate(0px, 0px)';
+                    currentGalleryImages = [];
+                    currentImageIndex = 0;
+                }
+            }
+        });
+
+        document.querySelector('.prev-btn').addEventListener('click', () => {
+            if (currentImageIndex > 0) {
+                currentImageIndex--;
+                modalImage.src = currentGalleryImages[currentImageIndex];
                 scale = 1;
                 initialX = 0;
                 initialY = 0;
                 modalImage.style.transform = `scale(${scale}) translate(${initialX}px, ${initialY}px)`;
-            } else {
-                modal.style.display = 'none';
-                modalImage.src = '';
-                modalImage.style.transform = 'scale(1) translate(0px, 0px)';
             }
-        }
-    });
-
-    // --- 页面加载时确保模态框不显示 ---
-    document.addEventListener('DOMContentLoaded', () => {
-        modal.style.display = 'none';
-        // 初始化笔记内容中的链接
-        document.querySelectorAll('.note-text').forEach(p => {
-            p.innerHTML = convertUrlsToLinks(p.dataset.rawText);
-        });
-        // 初始隐藏保存和取消按钮
-        document.querySelectorAll('.note-actions .btn-save, .note-actions .btn-cancel').forEach(btn => {
-            btn.style.display = 'none';
         });
 
-        // 画廊滑动功能
-        notesDisplay.addEventListener('click', (event) => {
-            const arrow = event.target.closest('.gallery-arrow');
-            if (!arrow) return;
-
-            const container = arrow.closest('.gallery-container');
-            const gallery = container.querySelector('.gallery');
-            const images = JSON.parse(container.dataset.images);
-            const leftArrow = container.querySelector('.arrow-left');
-            const rightArrow = container.querySelector('.arrow-right');
-            let currentPage = parseInt(container.dataset.currentPage || 0, 10);
-            const imagesPerPage = 3;
-            const totalPages = Math.ceil(images.length / imagesPerPage);
-
-            if (arrow.classList.contains('arrow-left')) {
-                if (currentPage > 0) {
-                    currentPage--;
-                }
-            } else if (arrow.classList.contains('arrow-right')) {
-                if (currentPage < totalPages - 1) {
-                    currentPage++;
-                }
+        document.querySelector('.next-btn').addEventListener('click', () => {
+            if (currentImageIndex < currentGalleryImages.length - 1) {
+                currentImageIndex++;
+                modalImage.src = currentGalleryImages[currentImageIndex];
+                scale = 1;
+                initialX = 0;
+                initialY = 0;
+                modalImage.style.transform = `scale(${scale}) translate(${initialX}px, ${initialY}px)`;
             }
-
-            const updateGallery = () => {
-                const offset = -currentPage * 100;
-                gallery.style.transform = `translateX(${offset}%)`;
-                leftArrow.style.display = currentPage === 0 ? 'none' : 'block';
-                rightArrow.style.display = currentPage === totalPages - 1 ? 'none' : 'block';
-                container.dataset.currentPage = currentPage;
-            };
-
-            updateGallery();
         });
     });
 
-    // --- 鼠标滚轮缩放（以鼠标位置为中心） ---
     modalImage.addEventListener('wheel', (event) => {
         event.preventDefault();
         const rect = modalImage.getBoundingClientRect();
@@ -441,7 +403,6 @@
         modalImage.style.transform = `scale(${scale}) translate(${initialX}px, ${initialY}px)`;
     });
 
-    // --- 图片拖拽 ---
     modalImage.addEventListener('mousedown', (event) => {
         if (scale <= 1) return;
         isDragging = true;
@@ -480,7 +441,6 @@
         modalImage.style.cursor = 'grab';
     });
 
-    // --- 手机端双指缩放和拖拽 ---
     modalImage.addEventListener('touchstart', (event) => {
         if (event.touches.length === 2) {
             event.preventDefault();
@@ -537,28 +497,38 @@
         }
     });
 
-    // --- Trigger file input on button click ---
     uploadBtn.addEventListener('click', () => {
         fileUpload.click();
     });
 
-    // --- Handle file selection with chunked upload ---
     fileUpload.addEventListener('change', (event) => {
         const files = Array.from(event.target.files);
         if (files.length === 0) return;
 
         const mode = uploadMode.value;
-        if (mode === 'single') {
+        if (mode === 'file') {
             if (files.length > 1) {
-                alert('单张上传模式下只能选择一张图片！');
+                showError('单张上传模式下只能选择一个文件！');
                 fileUpload.value = '';
                 return;
             }
-            console.log('File selected:', files[0].name);
             uploadFileInChunks(files[0]);
-        } else if (mode === 'gallery' || mode === 'zip') {
+        } else if (mode === 'gallery') {
             if (files.length > 30) {
-                alert('一次最多上传 30 张图片！');
+                showError('一次最多上传 30 张图片！');
+                fileUpload.value = '';
+                return;
+            }
+            const validFiles = files.filter(file => ['image/png', 'image/jpeg', 'image/gif'].includes(file.type));
+            if (validFiles.length !== files.length) {
+                showError('画廊模式仅支持图片格式（.png, .jpg, .jpeg, .gif）！');
+                fileUpload.value = '';
+                return;
+            }
+            uploadMultipleFiles(validFiles, mode);
+        } else if (mode === 'zip') {
+            if (files.length > 30) {
+                showError('一次最多上传 30 个文件！');
                 fileUpload.value = '';
                 return;
             }
@@ -572,8 +542,13 @@
         const totalChunks = Math.ceil(file.size / chunkSize);
         const chunkId = `chunk-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
         const filename = file.name.toLowerCase();
+        const mode = uploadMode.value;
 
-        console.log(`File selected: ${filename}`);
+        const allowedTypes = ['image/png', 'image/jpeg', 'image/gif', 'application/pdf', 'text/plain', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/zip', 'video/mp4'];
+        if (!allowedTypes.includes(file.type)) {
+            showError('不支持的文件类型！');
+            return null;
+        }
 
         const progressBar = document.getElementById('progressBar');
         const progressText = document.getElementById('progressText');
@@ -594,265 +569,102 @@
             formData.append('chunkIndex', i);
             formData.append('totalChunks', totalChunks);
             formData.append('chunkId', chunkId);
-            formData.append('gallery_mode', 'false');
+            formData.append('mode', mode);
+            formData.append('additional_text', additionalText.value || ''); // 添加附加文本
 
             try {
                 const response = await fetch('/notes/upload_chunk', {
                     method: 'POST',
-                    headers: {
-                        'X-CSRF-Token': csrfToken
-                    },
+                    headers: { 'X-CSRF-Token': csrfToken },
                     body: formData
                 });
-
-                let result;
-                const responseClone = response.clone();
-                try {
-                    result = await response.json();
-                } catch (e) {
-                    const errorText = await responseClone.text();
-                    console.error(`Non-JSON response for ${filename}:`, errorText);
-                    alert(`服务器响应无效: ${filename}，错误: ${errorText || '未知错误'}`);
-                    progressContainer.style.display = 'none';
-                    return;
-                }
-
+                const result = await response.json();
                 if (!result.success) {
-                    console.error(`Upload failed for ${filename}: ${result.error}`);
-                    alert(`上传失败: ${result.error || '未知错误'} (文件: ${filename})`);
+                    showError(`上传失败: ${result.error || '未知错误'} (文件: ${filename})`);
                     progressContainer.style.display = 'none';
-                    return;
+                    return null;
                 }
-
                 const progress = Math.round(((i + 1) / totalChunks) * 100);
                 progressBar.style.width = `${progress}%`;
                 progressText.textContent = `${progress}%`;
-
-                if (i === totalChunks - 1 && result.note) {
-                    addNoteToDisplay(result.note);
-                    notesDisplay.scrollTop = notesDisplay.scrollHeight;
+                if (i === totalChunks - 1) {
+                    if (mode === 'gallery') {
+                        return {
+                            content: result.content,
+                            raw_content: result.raw_content,
+                            file_size: result.file_size,
+                            md5: result.md5
+                        };
+                    } else if (result.note) {
+                        addNoteToDisplay(result.note);
+                        progressContainer.style.display = 'none';
+                        return result.note.content;
+                    }
                 }
             } catch (error) {
-                console.error(`Error uploading chunk for ${filename}:`, error);
-                alert(`上传分片时出错: ${error.message} (文件: ${filename})`);
+                showError(`上传分片时出错: ${error.message} (文件: ${filename})`);
                 progressContainer.style.display = 'none';
-                return;
+                return null;
             }
         }
-
         progressContainer.style.display = 'none';
+        return null;
+    }
+
+    async function compressAndUploadFiles(files) {
+        const zip = new JSZip();
+        files.forEach(file => {
+            zip.file(file.name, file);
+        });
+        const dateStr = new Date().toISOString().split('T')[0].replace(/-/g, '');
+        const zipBlob = await zip.generateAsync({ type: 'blob' });
+        const zipFile = new File([zipBlob], `${dateStr}-${files.length}.zip`, { type: 'application/zip' });
+        return await uploadFileInChunks(zipFile);
     }
 
     async function uploadMultipleFiles(files, mode) {
-        const progressBar = document.getElementById('progressBar');
-        const progressText = document.getElementById('progressText');
-        const progressContainer = document.getElementById('uploadProgress');
-
-        progressContainer.style.display = 'block';
-        progressBar.style.width = '0%';
-        progressText.textContent = '0%';
-
+        if (mode === 'zip') {
+            await compressAndUploadFiles(files);
+            return;
+        }
+        const fileData = [];
         const totalFiles = files.length;
         let uploadedFiles = 0;
-        const filePaths = [];
-
         for (const file of files) {
-            const chunkSize = CHUNK_SIZE;
-            const totalChunks = Math.ceil(file.size / chunkSize);
-            const chunkId = `chunk-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-            const filename = file.name.toLowerCase();
-
-            console.log(`File selected: ${filename}`);
-
-            for (let i = 0; i < totalChunks; i++) {
-                const start = i * chunkSize;
-                const end = Math.min(start + chunkSize, file.size);
-                const chunk = file.slice(start, end);
-
-                const formData = new FormData();
-                formData.append('chunk', chunk, filename);
-                formData.append('filename', filename);
-                formData.append('chunkIndex', i);
-                formData.append('totalChunks', totalChunks);
-                formData.append('chunkId', chunkId);
-                formData.append('gallery_mode', mode === 'gallery' ? 'true' : 'false');
-
-                try {
-                    const response = await fetch('/notes/upload_chunk', {
-                        method: 'POST',
-                        headers: {
-                            'X-CSRF-Token': csrfToken
-                        },
-                        body: formData
-                    });
-
-                    let result;
-                    const responseClone = response.clone();
-                    try {
-                        result = await response.json();
-                    } catch (e) {
-                        const errorText = await responseClone.text();
-                        console.error(`Non-JSON response for ${filename}:`, errorText);
-                        alert(`服务器响应无效: ${filename}，错误: ${errorText || '未知错误'}`);
-                        progressContainer.style.display = 'none';
-                        return;
-                    }
-
-                    if (!result.success) {
-                        console.error(`Upload failed for ${filename}: ${result.error}`);
-                        alert(`上传失败: ${result.error || '未知错误'} (文件: ${filename})`);
-                        progressContainer.style.display = 'none';
-                        return;
-                    }
-
-                    if (mode === 'gallery' && i === totalChunks - 1 && result.content) {
-                        filePaths.push(result.content);
-                    } else if (i === totalChunks - 1 && result.note && mode !== 'gallery') {
-                        filePaths.push(result.note.content);
-                    }
-                } catch (error) {
-                    console.error(`Error uploading chunk for ${filename}:`, error);
-                    alert(`上传分片时出错: ${error.message} (文件: ${filename})`);
-                    progressContainer.style.display = 'none';
-                    return;
-                }
+            const result = await uploadFileInChunks(file);
+            if (result) {
+                fileData.push(result);
             }
-
             uploadedFiles++;
             const progress = Math.round((uploadedFiles / totalFiles) * 100);
-            progressBar.style.width = `${progress}%`;
-            progressText.textContent = `${progress}%`;
+            document.getElementById('progressBar').style.width = `${progress}%`;
+            document.getElementById('progressText').textContent = `${progress}%`;
         }
-
-        try {
-            const response = await fetch('/notes/add_multiple', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-Token': csrfToken
-                },
-                body: JSON.stringify({
-                    mode: mode,
-                    file_paths: filePaths
-                })
-            });
-
-            let result;
-            const responseClone = response.clone();
+        if (mode === 'gallery' && fileData.length > 0) {
             try {
-                result = await response.json();
-            } catch (e) {
-                const errorText = await responseClone.text();
-                console.error('Non-JSON response:', errorText);
-                alert(`服务器响应无效: ${errorText || '未知错误'}`);
-                progressContainer.style.display = 'none';
-                return;
+                const response = await fetch('/notes/add_multiple', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-Token': csrfToken
+                    },
+                    body: JSON.stringify({ mode: 'gallery', file_data: fileData, additional_text: additionalText.value || '' })
+                });
+                const result = await response.json();
+                if (result.success && result.note) {
+                    addNoteToDisplay(result.note);
+                    notesDisplay.scrollTop = 0;
+                } else {
+                    showError(`保存画廊笔记失败: ${result.error || '未知错误'}`);
+                }
+            } catch (error) {
+                showError(`保存画廊笔记时出错: ${error.message}`);
             }
-
-            if (result.redirect) {
-                alert(result.error || '会话已超时，请重新登录');
-                window.location.href = result.redirect;
-                return;
-            }
-
-            if (result.success && result.note) {
-                addNoteToDisplay(result.note);
-                notesDisplay.scrollTop = notesDisplay.scrollHeight;
-            } else {
-                alert(`保存笔记失败: ${result.error || '未知错误'}`);
-            }
-        } catch (error) {
-            console.error('Error saving multiple files:', error);
-            alert(`保存多文件笔记时出错: ${error.message}`);
         }
-
-        progressContainer.style.display = 'none';
+        document.getElementById('uploadProgress').style.display = 'none';
     }
 
-    // --- 画廊滑动功能 ---
-    document.addEventListener('DOMContentLoaded', () => {
-        document.querySelectorAll('.gallery-container').forEach(container => {
-            const gallery = container.querySelector('.gallery');
-            const images = JSON.parse(container.dataset.images);
-            const leftArrow = container.querySelector('.arrow-left');
-            const rightArrow = container.querySelector('.arrow-right');
-            let currentPage = parseInt(container.dataset.currentPage || 0, 10);
-            const imagesPerPage = 3;
-            const totalPages = Math.ceil(images.length / imagesPerPage);
-
-            const updateGallery = () => {
-                const offset = -currentPage * 100;
-                gallery.style.transform = `translateX(${offset}%)`;
-                leftArrow.style.display = currentPage === 0 ? 'none' : 'block';
-                rightArrow.style.display = currentPage === totalPages - 1 ? 'none' : 'block';
-                container.dataset.currentPage = currentPage;
-            };
-
-            // 初始填充所有图片
-            if (gallery.children.length < images.length) {
-                gallery.innerHTML = images.map(img => `<img src="${img}" alt="画廊图片" data-full-src="${img}" loading="lazy">`).join('');
-            }
-
-            // 限制显示的图片数量
-            updateGallery();
-
-            let touchStartX = 0;
-            gallery.addEventListener('touchstart', (e) => {
-                touchStartX = e.touches[0].clientX;
-            });
-
-            gallery.addEventListener('touchend', (e) => {
-                const touchEndX = e.changedTouches[0].clientX;
-                const swipeDistance = touchEndX - touchStartX;
-                if (swipeDistance > 50 && currentPage > 0) {
-                    currentPage--;
-                    updateGallery();
-                } else if (swipeDistance < -50 && currentPage < totalPages - 1) {
-                    currentPage++;
-                    updateGallery();
-                }
-            });
-        });
-
-        // 事件委托处理箭头点击
-        notesDisplay.addEventListener('click', (event) => {
-            const arrow = event.target.closest('.gallery-arrow');
-            if (!arrow) return;
-
-            const container = arrow.closest('.gallery-container');
-            const gallery = container.querySelector('.gallery');
-            const images = JSON.parse(container.dataset.images);
-            const leftArrow = container.querySelector('.arrow-left');
-            const rightArrow = container.querySelector('.arrow-right');
-            let currentPage = parseInt(container.dataset.currentPage || 0, 10);
-            const imagesPerPage = 3;
-            const totalPages = Math.ceil(images.length / imagesPerPage);
-
-            if (arrow.classList.contains('arrow-left')) {
-                if (currentPage > 0) {
-                    currentPage--;
-                }
-            } else if (arrow.classList.contains('arrow-right')) {
-                if (currentPage < totalPages - 1) {
-                    currentPage++;
-                }
-            }
-
-            const updateGallery = () => {
-                const offset = -currentPage * 100;
-                gallery.style.transform = `translateX(${offset}%)`;
-                leftArrow.style.display = currentPage === 0 ? 'none' : 'block';
-                rightArrow.style.display = currentPage === totalPages - 1 ? 'none' : 'block';
-                container.dataset.currentPage = currentPage;
-            };
-
-            updateGallery();
-        });
-    });
-
-    // --- Paste Handling ---
     noteInput.addEventListener('paste', (event) => {
-        console.log('Paste event triggered');
         const items = (event.clipboardData || window.clipboardData).items;
         let pastedText = event.clipboardData.getData('text/plain');
         let foundImage = false;
@@ -881,13 +693,10 @@
         }
     });
 
-    // --- Text Submission ---
     noteInput.addEventListener('keydown', (event) => {
-        console.log('Keydown event:', event.key);
         if (event.key === 'Enter' && !event.shiftKey) {
             event.preventDefault();
             const textContent = noteInput.innerText.trim();
-            console.log('Enter pressed, text:', textContent);
             if (textContent) {
                 sendNoteData('text', textContent);
                 noteInput.innerText = '';
@@ -895,7 +704,6 @@
         }
     });
 
-    // --- Send Note Data ---
     async function sendNoteData(type, content, filename) {
         const data = { type, content };
         if (filename) data.filename = filename;
@@ -911,31 +719,24 @@
             const result = await response.json();
             if (result.success && result.note) {
                 addNoteToDisplay(result.note);
-                notesDisplay.scrollTop = notesDisplay.scrollHeight;
+                notesDisplay.scrollTop = 0;
             } else {
-                alert('添加笔记失败: ' + (result.error || '未知错误'));
+                showError('添加笔记失败: ' + (result.error || '未知错误'));
             }
         } catch (error) {
-            console.error('Error adding note:', error);
-            alert('添加笔记时出错: ' + error.message);
+            showError('添加笔记时出错: ' + error.message);
         }
     }
 
-    // --- Add Note to Display ---
     function addNoteToDisplay(note) {
-        console.log('Adding note to display:', note);
         const noteDiv = document.createElement('div');
         noteDiv.className = 'note-entry';
         noteDiv.id = `note-${note.id}`;
         noteDiv.dataset.noteId = note.id;
         const timeSpan = document.createElement('span');
         timeSpan.className = 'timestamp';
-        try {
-            timeSpan.textContent = new Date(note.timestamp).toLocaleString() + ' UTC';
-        } catch(e) {
-            timeSpan.textContent = note.timestamp + ' UTC';
-        }
-        if (note.type === 'image' || note.type === 'file' || note.type === 'gallery' || note.type === 'zip') {
+        timeSpan.textContent = new Date(note.timestamp).toLocaleString() + ' UTC';
+        if (note.type === 'image' || note.type === 'file' || note.type === 'zip' || note.type === 'gallery') {
             if (note.md5) {
                 const md5Span = document.createElement('span');
                 md5Span.className = 'file-md5';
@@ -982,36 +783,31 @@
             contentDiv.appendChild(a);
             actionsDiv.innerHTML = `<button class="btn-delete" title="删除">🗑</button>`;
         } else if (note.type === 'gallery') {
-            let images = note.content;
-            if (typeof images === 'string') {
-                try {
-                    images = JSON.parse(images);
-                } catch (e) {
-                    console.error('Error parsing gallery images:', e);
-                    images = [images];
-                }
-            }
-            if (!Array.isArray(images)) {
-                images = [images];
-            }
-            const galleryContainer = document.createElement('div');
-            galleryContainer.className = 'gallery-container';
-            galleryContainer.dataset.images = JSON.stringify(images);
-            galleryContainer.dataset.currentPage = '0';
-            galleryContainer.innerHTML = `
-                <button class="gallery-arrow arrow-left" style="display: none;">←</button>
-                <div class="gallery">
-                    ${images.map(img => `<img src="${img}" alt="画廊图片" data-full-src="${img}" loading="lazy">`).join('')}
-                </div>
-                <button class="gallery-arrow arrow-right" style="${images.length <= 3 ? 'display: none;' : ''}">→</button>
-            `;
-            contentDiv.appendChild(galleryContainer);
-            actionsDiv.innerHTML = `<button class="btn-delete" title="删除">🗑</button>`;
+            const a = document.createElement('a');
+            a.href = `/notes/gallery/${note.id}`;
+            a.className = 'gallery-icon';
+            a.title = '查看画廊';
+            a.textContent = `📁 画廊 (${note.content.length} 张图片)`;
+            contentDiv.appendChild(a);
+            actionsDiv.innerHTML = `
+                <button class="btn-delete" title="删除">🗑</button>
+                <a href="/notes/download_gallery/${note.id}" class="btn-download" title="一键下载">📥</a>`;
         }
-        notesDisplay.appendChild(noteDiv);
+        if (note.additional_text) {
+            const p = document.createElement('p');
+            p.className = 'additional-text';
+            p.setAttribute('data-raw-text', note.additional_text);
+            p.innerHTML = convertUrlsToLinks(note.additional_text);
+            contentDiv.appendChild(p);
+            actionsDiv.innerHTML += `
+                <button class="btn-edit" title="编辑">✎</button>
+                <button class="btn-save" title="保存" style="display: none;">✔</button>
+                <button class="btn-cancel" title="取消" style="display: none;">✖</button>`;
+        }
+        notesDisplay.insertBefore(noteDiv, notesDisplay.firstChild);
+        notesDisplay.scrollTop = 0;
     }
 
-    // --- Format File Size ---
     function formatFileSize(bytes) {
         if (bytes < 1024) return bytes + ' B';
         else if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(2) + ' KB';
@@ -1019,13 +815,19 @@
         else return (bytes / (1024 * 1024 * 1024)).toFixed(2) + ' GB';
     }
 
-    // --- Convert URLs to Links ---
     function convertUrlsToLinks(text) {
         const urlPattern = /(https?:\/\/[^\s<]+[^<.,:;"')\]\s])/g;
         return text.replace(urlPattern, '<a href="$1" target="_blank">$1</a>').replace(/\n/g, '<br>');
     }
 
-    // --- Edit Note ---
+    function showError(message) {
+        const alertDiv = document.createElement('div');
+        alertDiv.className = 'alert alert-danger alert-dismissible fade show';
+        alertDiv.innerHTML = `${message} <button type="button" class="btn-close" data-bs-dismiss="alert"></button>`;
+        document.body.insertBefore(alertDiv, document.body.firstChild);
+        setTimeout(() => alertDiv.remove(), 5000);
+    }
+
     notesDisplay.addEventListener('click', async (event) => {
         const target = event.target;
         const noteDiv = target.closest('.note-entry');
@@ -1034,17 +836,19 @@
 
         if (target.classList.contains('btn-edit')) {
             if (currentEditingNote && currentEditingNote !== noteDiv) {
-                alert('请先保存或取消当前编辑的笔记！');
+                showError('请先保存或取消当前编辑的笔记！');
                 return;
             }
             if (noteDiv.classList.contains('editing')) return;
             noteDiv.classList.add('editing');
             currentEditingNote = noteDiv;
-            const p = noteDiv.querySelector('.note-text');
-            const rawText = p.dataset.rawText;
+            const contentDiv = noteDiv.querySelector('.note-content');
+            let textElement = contentDiv.querySelector('.note-text, .additional-text');
+            let rawText = textElement ? textElement.dataset.rawText || textElement.textContent : '';
             const textarea = document.createElement('textarea');
             textarea.value = rawText;
-            p.after(textarea);
+            if (textElement) textElement.style.display = 'none';
+            contentDiv.appendChild(textarea);
             textarea.focus();
             noteDiv.querySelector('.btn-save').style.display = 'inline-block';
             noteDiv.querySelector('.btn-cancel').style.display = 'inline-block';
@@ -1054,7 +858,7 @@
             const textarea = noteDiv.querySelector('textarea');
             const newContent = textarea.value.trim();
             if (!newContent) {
-                alert('内容不能为空');
+                showError('内容不能为空');
                 return;
             }
             try {
@@ -1068,28 +872,38 @@
                 });
                 const result = await response.json();
                 if (result.success) {
-                    const p = noteDiv.querySelector('.note-text');
-                    p.textContent = newContent;
-                    p.dataset.rawText = newContent;
-                    p.innerHTML = convertUrlsToLinks(newContent);
-                    noteDiv.querySelector('.timestamp').textContent = new Date(result.new_timestamp).toLocaleString() + ' UTC';
-                    noteDiv.classList.remove('editing');
-                    textarea.remove();
+                    const contentDiv = noteDiv.querySelector('.note-content');
+                    let textElement = contentDiv.querySelector('.note-text, .additional-text');
+                    if (!textElement) {
+                        textElement = document.createElement('p');
+                        textElement.className = 'additional-text';
+                        contentDiv.appendChild(textElement);
+                    }
+                    textElement.textContent = newContent;
+                    textElement.dataset.rawText = newContent;
+                    textElement.innerHTML = convertUrlsToLinks(newContent);
+                    if (contentDiv.querySelector('.note-text')) contentDiv.querySelector('.note-text').style.display = 'block';
                     noteDiv.querySelector('.btn-save').style.display = 'none';
                     noteDiv.querySelector('.btn-cancel').style.display = 'none';
                     noteDiv.querySelector('.btn-edit').style.display = 'inline-block';
                     noteDiv.querySelector('.btn-delete').style.display = 'inline-block';
+                    noteDiv.querySelector('.timestamp').textContent = new Date(result.new_timestamp).toLocaleString() + ' UTC';
+                    noteDiv.classList.remove('editing');
+                    textarea.remove();
                     currentEditingNote = null;
                 } else {
-                    alert('编辑失败: ' + (result.error || '未知错误'));
+                    showError('编辑失败: ' + (result.error || '未知错误'));
                 }
             } catch (error) {
-                console.error('Error editing note:', error);
-                alert('编辑笔记时出错: ' + error.message);
+                showError('编辑笔记时出错: ' + error.message);
             }
         } else if (target.classList.contains('btn-cancel')) {
             noteDiv.classList.remove('editing');
-            noteDiv.querySelector('textarea').remove();
+            const textarea = noteDiv.querySelector('textarea');
+            const contentDiv = noteDiv.querySelector('.note-content');
+            let textElement = contentDiv.querySelector('.note-text, .additional-text');
+            if (textElement) textElement.style.display = 'block';
+            textarea.remove();
             noteDiv.querySelector('.btn-save').style.display = 'none';
             noteDiv.querySelector('.btn-cancel').style.display = 'none';
             noteDiv.querySelector('.btn-edit').style.display = 'inline-block';
@@ -1100,9 +914,7 @@
             try {
                 const response = await fetch(`/notes/delete/${noteId}`, {
                     method: 'POST',
-                    headers: {
-                        'X-CSRF-Token': csrfToken
-                    }
+                    headers: { 'X-CSRF-Token': csrfToken }
                 });
                 const result = await response.json();
                 if (result.success) {
@@ -1111,16 +923,14 @@
                         notesDisplay.innerHTML = '<div class="no-notes">暂无笔记，请添加新笔记！</div>';
                     }
                 } else {
-                    alert('删除失败: ' + (result.error || '未知错误'));
+                    showError('删除失败: ' + (result.error || '未知错误'));
                 }
             } catch (error) {
-                console.error('Error deleting note:', error);
-                alert('删除笔记时出错: ' + error.message);
+                showError('删除笔记时出错: ' + error.message);
             }
         }
     });
 
-    // --- Ctrl+S 快捷键保存 ---
     document.addEventListener('keydown', (event) => {
         if (event.ctrlKey && event.key === 's') {
             event.preventDefault();

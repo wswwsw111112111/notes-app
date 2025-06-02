@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% block title %}画廊 - {{ note.id }}{% endblock %}
+
+{% block content %}
+<style>
+.gallery-container {
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 150px);
+    padding: 15px;
+}
+.gallery-images {
+    flex-grow: 1;
+    overflow-y: auto;
+    padding: 10px;
+    background-color: #f9f9f9;
+}
+.gallery-image {
+    max-width: 100%;
+    max-height: 300px;
+    margin: 10px 0;
+    display: block;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+.gallery-image.loaded {
+    opacity: 1;
+}
+.timestamp {
+    font-size: 0.8em;
+    color: #888;
+    text-align: center;
+    margin-bottom: 10px;
+}
+.back-btn {
+    margin-bottom: 10px;
+    padding: 5px 10px;
+    background-color: #f0f0f0;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    cursor: pointer;
+}
+</style>
+
+<div class="gallery-container">
+    <a href="{{ url_for('notes_page') }}" class="back-btn">返回笔记列表</a>
+    <div class="timestamp">{{ note.timestamp.strftime('%Y-%m-%d %H:%M:%S UTC') }}</div>
+    <div class="gallery-images" id="galleryImages">
+        {% for path in image_paths %}
+            <img class="gallery-image" data-src="{{ url_for('uploaded_file', filename=path) }}" data-raw-name="{{ raw_contents[loop.index0] if raw_contents else path | basename }}" alt="画廊图片">
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const galleryImages = document.getElementById('galleryImages');
+        const images = galleryImages.getElementsByClassName('gallery-image');
+        const loadThreshold = 300;
+        let loadedCount = 0;
+
+        function loadImage(img) {
+            if (!img.classList.contains('loaded') && img.dataset.src) {
+                const newImg = new Image();
+                newImg.onload = () => {
+                    img.src = img.dataset.src;
+                    img.alt = img.dataset.rawName || '画廊图片';
+                    img.classList.add('loaded');
+                    loadedCount++;
+                };
+                newImg.onerror = () => {
+                    console.error(`Failed to load image: ${img.dataset.src}`);
+                };
+                newImg.src = img.dataset.src;
+            }
+        }
+
+        for (let i = 0; i < Math.min(3, images.length); i++) {
+            loadImage(images[i]);
+        }
+
+        function checkImages() {
+            const scrollTop = galleryImages.scrollTop;
+            const clientHeight = galleryImages.clientHeight;
+
+            for (let img of images) {
+                const rect = img.getBoundingClientRect();
+                const imgTop = rect.top + scrollTop;
+                if (imgTop < scrollTop + clientHeight + loadThreshold && !img.classList.contains('loaded') && loadedCount < images.length) {
+                    loadImage(img);
+                }
+            }
+        }
+
+        galleryImages.addEventListener('scroll', checkImages);
+        checkImages();
+
+        galleryImages.addEventListener('click', (event) => {
+            const img = event.target.closest('.gallery-image');
+            if (img && img.classList.contains('loaded')) {
+                window.open(img.src, '_blank');
+            }
+        });
+    });
+</script>
+{% endblock %}
