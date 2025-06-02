@@ -3,6 +3,35 @@
   <component name="ChangeListManager">
     <list id="90b291b5-4985-4c0c-a340-99686552e9d7" name="Revert: 添加了25行的备注" comment="" />
     <list default="true" id="e04db567-30f1-467e-87a2-bc5e0c572cc0" name="Default" comment="">
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/static/placeholder.png" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/uploads/20130702_200033.jpg" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/uploads/20130702_202253.jpg" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/uploads/20130702_202302.jpg" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/uploads/8_.pdf" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/uploads/jpg" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/uploads/pdf" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/uploads/pdf_1" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/uploads/pdf_2" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/uploads/temp/chunk-1748845145413-of7vfp169/chunk-0" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/uploads/temp/chunk-1748845145563-edh9webwy/chunk-0" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/uploads/temp/chunk-1748849810591-uxzdqmqoi/chunk-0" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/uploads/temp/chunk-1748849836340-8l2zxj848/chunk-0" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/uploads/temp/chunk-1748850450771-oteptglf7/chunk-0" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/uploads/temp/chunk-1748850817556-8uuj91vxn/chunk-0" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/uploads/temp/chunk-1748850817556-8uuj91vxn/chunk-1" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/uploads/temp/chunk-1748850817556-8uuj91vxn/chunk-2" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/uploads/temp/chunk-1748850836328-rqguil42d/chunk-0" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/uploads/temp/chunk-1748850878736-lvcwobg2q/chunk-0" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/uploads/temp/chunk-1748851098371-ecwork18p/chunk-0" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/uploads/temp/chunk-1748851449809-j0abrmrtr/chunk-0" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/uploads/temp/chunk-1748851595510-cteb6msue/chunk-0" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/uploads/temp/chunk-1748851832275-nzzz9fyx2/chunk-0" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/uploads/temp/chunk-1748852002509-wfvdqarxb/chunk-0" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/uploads/temp/chunk-1748853917271-ryr9z0x00/chunk-0" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/uploads/temp/chunk-1748871405097-ius1wtsi2/chunk-0" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/uploads/temp/chunk-1748871503495-gn81a8635/chunk-0" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/uploads/temp/chunk-1748871547898-9uyhpu8d0/chunk-0" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/Project Summary Document.markdown" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -29,8 +58,8 @@
       <file leaf-file-name="test6.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/test6.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="407">
-              <caret line="551" column="76" lean-forward="true" selection-start-line="551" selection-start-column="76" selection-end-line="551" selection-end-column="76" />
+            <state relative-caret-position="667">
+              <caret line="583" column="0" lean-forward="true" selection-start-line="583" selection-start-column="0" selection-end-line="583" selection-end-column="0" />
               <folding>
                 <element signature="e#0#125#0" expanded="true" />
                 <element signature="e#2895#3792#0" expanded="false" />
@@ -487,7 +516,14 @@
       <option name="project" value="LOCAL" />
       <updated>1748872469757</updated>
     </task>
-    <option name="localTasksCounter" value="14" />
+    <task id="LOCAL-00014" summary="1.修复多图上床显示问题&#10;2.修复压缩上传模式">
+      <created>1748872933401</created>
+      <option name="number" value="00014" />
+      <option name="presentableId" value="LOCAL-00014" />
+      <option name="project" value="LOCAL" />
+      <updated>1748872933401</updated>
+    </task>
+    <option name="localTasksCounter" value="15" />
     <servers />
   </component>
   <component name="TodoView">
@@ -501,16 +537,15 @@
   </component>
   <component name="ToolWindowManager">
     <frame x="-11" y="-11" width="3862" height="2122" extended-state="6" />
-    <editor active="true" />
     <layout>
       <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.15906681" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.3295099" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
-      <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.40092167" sideWeight="0.6065104" order="7" side_tool="true" content_ui="tabs" />
+      <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.3493222" sideWeight="0.6073701" order="7" side_tool="true" content_ui="tabs" />
       <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4822732" sideWeight="0.36956522" order="5" side_tool="false" content_ui="tabs" />
-      <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.1684046" sideWeight="0.49681866" order="10" side_tool="false" content_ui="tabs" />
+      <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.1684046" sideWeight="0.44936374" order="10" side_tool="false" content_ui="tabs" />
       <window_info id="Python Console" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.3295099" sideWeight="0.49893954" order="8" side_tool="false" content_ui="tabs" />
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
-      <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.3493222" sideWeight="0.39348957" order="9" side_tool="false" content_ui="tabs" />
+      <window_info id="Terminal" active="true" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.3493222" sideWeight="0.3926299" order="9" side_tool="false" content_ui="tabs" />
       <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.3998465" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="true" content_ui="tabs" />
       <window_info id="Data View" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32979852" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
@@ -870,8 +905,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/test6.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="407">
-          <caret line="551" column="76" lean-forward="true" selection-start-line="551" selection-start-column="76" selection-end-line="551" selection-end-column="76" />
+        <state relative-caret-position="667">
+          <caret line="583" column="0" lean-forward="true" selection-start-line="583" selection-start-column="0" selection-end-line="583" selection-end-column="0" />
           <folding>
             <element signature="e#0#125#0" expanded="true" />
             <element signature="e#2895#3792#0" expanded="false" />
