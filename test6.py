@@ -1,4 +1,5 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, session, send_from_directory, send_file
+from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, session, send_from_directory, \
+    send_file
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -11,6 +12,7 @@ import hashlib
 import zipfile
 import shutil
 import json
+import glob  # 添加 glob 模块
 from flask_migrate import Migrate
 import magic
 import logging
@@ -39,18 +41,22 @@ csrf = CSRFProtect(app)
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
 
+
 # Template filter for JSON parsing
 @app.template_filter('fromjson')
 def fromjson_filter(data):
     return json.loads(data)
 
+
 ALLOWED_EXTENSIONS = {'.png', '.jpg', '.jpeg', '.gif', '.pdf', '.txt', '.doc', '.docx', '.zip', '.mp4'}
+
 
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False, index=True)
     password_hash = db.Column(db.String(128), nullable=False)
     notes = db.relationship('Note', backref='user', lazy=True)
+
 
 class Note(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -65,6 +71,7 @@ class Note(db.Model):
 
     def __repr__(self):
         return f'<Note {self.id} {self.content_type}>'
+
 
 def allowed_file(filename, file_content=None):
     ext = os.path.splitext(filename)[1].lower()
@@ -92,13 +99,16 @@ def allowed_file(filename, file_content=None):
         logger.error(f"MIME check failed for {filename}: {str(e)}")
         return False
 
+
 @login_manager.user_loader
 def load_user(user_id):
     return db.session.get(User, int(user_id))
 
+
 @app.route('/')
 def index():
     return redirect(url_for('login'))
+
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -120,6 +130,7 @@ def login():
             logger.error(f"Login failed: Invalid username or password for {username}")
             return redirect(url_for('login'))
     return render_template('login.html')
+
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
@@ -157,6 +168,7 @@ def register():
             return redirect(url_for('register'))
     return render_template('register.html')
 
+
 @app.route('/logout')
 @login_required
 def logout():
@@ -165,15 +177,19 @@ def logout():
     logger.info("Logout successful: Session cleared")
     return redirect(url_for('login'))
 
+
 @app.route('/notes', defaults={'page': 1})
 @app.route('/notes/page/<int:page>')
 @login_required
 def notes_page(page):
     page = request.args.get('page', 1, type=int)
     per_page = 10
-    notes = Note.query.filter_by(user_id=current_user.id).order_by(Note.timestamp.desc()).paginate(page=page, per_page=per_page, error_out=False)
+    notes = Note.query.filter_by(user_id=current_user.id).order_by(Note.timestamp.desc()).paginate(page=page,
+                                                                                                   per_page=per_page,
+                                                                                                   error_out=False)
     logger.info(f"Notes page loaded: user_id={current_user.id}, page={page}, number of notes={notes.total}")
     return render_template('notes.html', notes=notes)
+
 
 @app.route('/notes/gallery/<int:note_id>')
 @login_required
@@ -189,13 +205,15 @@ def gallery_page(note_id):
         return redirect(url_for('notes_page'))
     try:
         image_paths = json.loads(note.content_data)
-        raw_contents = json.loads(note.raw_content) if note.raw_content else [os.path.basename(path) for path in image_paths]
+        raw_contents = json.loads(note.raw_content) if note.raw_content else [os.path.basename(path) for path in
+                                                                              image_paths]
         logger.info(f"Gallery page loaded: Note ID={note_id}, Images={len(image_paths)}")
         return render_template('gallery.html', note=note, image_paths=image_paths, raw_contents=raw_contents)
     except Exception as e:
         logger.error(f"Gallery page failed: {str(e)}")
         flash('加载画廊失败', 'danger')
         return redirect(url_for('notes_page'))
+
 
 @app.route('/notes/add', methods=['POST'])
 @login_required
@@ -257,7 +275,8 @@ def add_note():
             'note': {
                 'id': new_note.id,
                 'type': new_note.content_type,
-                'content': new_note.content_data if note_type == 'text' else url_for('uploaded_file', filename=new_note.content_data),
+                'content': new_note.content_data if note_type == 'text' else url_for('uploaded_file',
+                                                                                     filename=new_note.content_data),
                 'raw_content': new_note.raw_content,
                 'timestamp': new_note.timestamp.isoformat(),
                 'file_size': new_note.file_size,
@@ -269,6 +288,7 @@ def add_note():
         logger.error(f"Add note failed: Database error - {str(e)}")
         return jsonify({'success': False, 'error': f'数据库错误: {str(e)}'}), 500
 
+
 @app.route('/notes/upload_chunk', methods=['POST'])
 @login_required
 def upload_chunk():
@@ -279,7 +299,7 @@ def upload_chunk():
     total_chunks = int(request.form.get('totalChunks', -1))
     chunk_id = request.form.get('chunkId')
     mode = request.form.get('mode', 'file')
-    additional_text = request.form.get('additional_text', '')  # 从前端获取附加文本
+    additional_text = request.form.get('additional_text', '')
 
     if mode not in ['file', 'gallery', 'zip']:
         logger.error(f"Invalid upload mode: {mode}")
@@ -401,7 +421,7 @@ def upload_chunk():
                     content_type='zip',
                     content_data=json.dumps(file_paths),
                     raw_content=zip_filename,
-                    additional_text=additional_text,  # 存储附加文本
+                    additional_text=additional_text,
                     file_size=sum(os.path.getsize(os.path.join(app.config['UPLOAD_FOLDER'], f)) for f in file_paths),
                     md5=hashlib.md5(''.join(
                         hashlib.md5(open(os.path.join(app.config['UPLOAD_FOLDER'], f), 'rb').read()).hexdigest()
@@ -417,6 +437,11 @@ def upload_chunk():
                 except PermissionError:
                     logger.warning(f"Failed to remove {final_path} due to PermissionError")
                 logger.info(f"Zip file processed: {zip_filename}, extracted {len(file_paths)} files")
+                try:
+                    shutil.rmtree(chunk_dir)
+                    logger.info(f"Cleaned chunk directory after zip upload: {chunk_dir}")
+                except Exception as e:
+                    logger.warning(f"Failed to clean chunk directory {chunk_dir}: {str(e)}")
                 return jsonify({
                     'success': True,
                     'note': {
@@ -448,9 +473,19 @@ def upload_chunk():
                         logger.warning(f"Failed to remove {final_path} due to PermissionError")
                 logger.error(f"Zip extract failed: {str(e)}")
                 return jsonify({'success': False, 'error': f'解压失败: {str(e)}'}), 500
+            finally:
+                try:
+                    shutil.rmtree(chunk_dir)
+                    logger.info(f"Cleaned chunk directory after zip processing: {chunk_dir}")
+                except Exception as e:
+                    logger.warning(f"Failed to clean chunk directory {chunk_dir}: {str(e)}")
 
         if mode == 'gallery':
-            shutil.rmtree(chunk_dir)
+            try:
+                shutil.rmtree(chunk_dir)
+                logger.info(f"Cleaned chunk directory after gallery upload: {chunk_dir}")
+            except Exception as e:
+                logger.warning(f"Failed to clean chunk directory {chunk_dir}: {str(e)}")
             logger.info(f"Gallery file uploaded: {filename}, Path={safe_filename}")
             return jsonify({
                 'success': True,
@@ -466,7 +501,7 @@ def upload_chunk():
             content_type=content_type,
             content_data=safe_filename,
             raw_content=filename,
-            additional_text=additional_text,  # 存储附加文本
+            additional_text=additional_text,
             file_size=file_size,
             md5=md5_hash,
             timestamp=datetime.now(timezone.utc)
@@ -474,8 +509,12 @@ def upload_chunk():
         try:
             db.session.add(new_note)
             db.session.commit()
-            shutil.rmtree(chunk_dir)
             logger.info(f"Note added: ID={new_note.id}, Type={content_type}, User ID={user_id}")
+            try:
+                shutil.rmtree(chunk_dir)
+                logger.info(f"Cleaned chunk directory after file upload: {chunk_dir}")
+            except Exception as e:
+                logger.warning(f"Failed to clean chunk directory {chunk_dir}: {str(e)}")
             return jsonify({
                 'success': True,
                 'note': {
@@ -491,7 +530,6 @@ def upload_chunk():
             })
         except Exception as e:
             db.session.rollback()
-            shutil.rmtree(chunk_dir, ignore_errors=True)
             if os.path.exists(final_path):
                 try:
                     os.remove(final_path)
@@ -499,9 +537,16 @@ def upload_chunk():
                     logger.warning(f"Failed to remove {final_path} due to PermissionError")
             logger.error(f"Database save failed: {str(e)}")
             return jsonify({'success': False, 'error': f'数据库保存失败: {str(e)}'}), 500
+        finally:
+            try:
+                shutil.rmtree(chunk_dir)
+                logger.info(f"Cleaned chunk directory after file processing: {chunk_dir}")
+            except Exception as e:
+                logger.warning(f"Failed to clean chunk directory {chunk_dir}: {str(e)}")
 
     logger.info(f"Chunk uploaded: {filename}, index={chunk_index}/{total_chunks}")
     return jsonify({'success': True, 'message': '分片上传成功'})
+
 
 @app.route('/notes/add_multiple', methods=['POST'])
 @login_required
@@ -514,7 +559,7 @@ def add_multiple():
 
     mode = data['mode']
     file_data = data['file_data']  # List of {content, raw_content, file_size, md5}
-    additional_text = data.get('additional_text', '')  # 从前端获取附加文本
+    additional_text = data.get('additional_text', '')
     if mode != 'gallery':
         logger.error(f"Unsupported mode: {mode}")
         return jsonify({'success': False, 'error': '不支持的模式'}), 400
@@ -526,7 +571,7 @@ def add_multiple():
             content_type='gallery',
             content_data=json.dumps(file_paths),
             raw_content=json.dumps([item['raw_content'] for item in file_data]),
-            additional_text=additional_text,  # 存储附加文本
+            additional_text=additional_text,
             file_size=sum(item['file_size'] for item in file_data),
             md5=hashlib.md5(''.join(item['md5'] for item in file_data).encode()).hexdigest(),
             timestamp=datetime.now(timezone.utc)
@@ -550,6 +595,7 @@ def add_multiple():
         db.session.rollback()
         logger.error(f"Add multiple notes failed: Database error - {str(e)}")
         return jsonify({'success': False, 'error': f'数据库错误: {str(e)}'}), 500
+
 
 @app.route('/notes/edit/<int:note_id>', methods=['POST'])
 @login_required
@@ -582,13 +628,14 @@ def edit_note(note_id):
         logger.error(f"Edit note failed: Database error - {str(e)}")
         return jsonify({'success': False, 'error': f'数据库错误: {str(e)}'}), 500
 
+
 @app.route('/notes/delete/<int:note_id>', methods=['POST'])
 @login_required
 def delete_note(note_id):
     user_id = current_user.id
     note = Note.query.get_or_404(note_id)
     if note.user_id != user_id:
-        logger.error(f"Delete note failed: User ID {user_id} has no permission to delete note ID {note_id}")
+        logger.error(f"Delete note failed: User ID {user_id} has no permission to delete note ID {user_id}")
         return jsonify({'success': False, 'error': '无权删除此笔记'}), 403
     try:
         if note.content_type in ['image', 'file', 'zip']:
@@ -618,6 +665,17 @@ def delete_note(note_id):
                         logger.info(f"Gallery file deleted: {file_path}")
                     except PermissionError:
                         logger.warning(f"Failed to remove {file_path} due to PermissionError")
+
+        # 清理可能残留的分块文件
+        chunk_dirs = glob.glob(os.path.join(app.config['TEMP_CHUNK_DIR'], f"chunk-*-{note.content_data}"))
+        for chunk_dir in chunk_dirs:
+            if os.path.exists(chunk_dir):
+                try:
+                    shutil.rmtree(chunk_dir)
+                    logger.info(f"Cleaned chunk directory: {chunk_dir}")
+                except Exception as e:
+                    logger.warning(f"Failed to clean chunk directory {chunk_dir}: {str(e)}")
+
         db.session.delete(note)
         db.session.commit()
         logger.info(f"Note deleted: ID={note_id}")
@@ -626,6 +684,7 @@ def delete_note(note_id):
         db.session.rollback()
         logger.error(f"Delete note failed: Database error - {str(e)}")
         return jsonify({'success': False, 'error': f'数据库错误: {str(e)}'}), 500
+
 
 @app.route('/notes/download_gallery/<int:note_id>')
 @login_required
@@ -641,7 +700,8 @@ def download_gallery(note_id):
 
     try:
         file_paths = json.loads(note.content_data)
-        raw_contents = json.loads(note.raw_content) if note.raw_content else [os.path.basename(path) for path in file_paths]
+        raw_contents = json.loads(note.raw_content) if note.raw_content else [os.path.basename(path) for path in
+                                                                              file_paths]
         zip_buffer = BytesIO()
         with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
             for path, original_name in zip(file_paths, raw_contents):
@@ -662,6 +722,7 @@ def download_gallery(note_id):
         logger.error(f"Download gallery failed: {str(e)}")
         return jsonify({'success': False, 'error': f'下载失败: {str(e)}'}), 500
 
+
 @app.route('/notes/download_zip/<int:note_id>')
 @login_required
 def download_zip(note_id):
@@ -678,7 +739,8 @@ def download_zip(note_id):
         file_paths = json.loads(note.content_data)
         if not isinstance(file_paths, list):
             raise ValueError("Invalid content_data format")
-        raw_contents = json.loads(note.raw_content) if note.raw_content and isinstance(note.raw_content, str) else [os.path.basename(path) for path in file_paths]
+        raw_contents = json.loads(note.raw_content) if note.raw_content and isinstance(note.raw_content, str) else [
+            os.path.basename(path) for path in file_paths]
         zip_buffer = BytesIO()
         with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
             for path, original_name in zip(file_paths, raw_contents):
@@ -702,6 +764,7 @@ def download_zip(note_id):
     except Exception as e:
         logger.error(f"Download zip failed: {str(e)}")
         return jsonify({'success': False, 'error': f'下载失败: {str(e)}'}), 500
+
 
 @app.route('/uploads/<filename>')
 def uploaded_file(filename):
