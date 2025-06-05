@@ -3,27 +3,7 @@
   <component name="ChangeListManager">
     <list id="90b291b5-4985-4c0c-a340-99686552e9d7" name="Revert: 添加了25行的备注" comment="" />
     <list default="true" id="e04db567-30f1-467e-87a2-bc5e0c572cc0" name="Default" comment="">
-      <change type="DELETED" beforePath="$PROJECT_DIR$/uploads/temp/chunk-1748845145413-of7vfp169/chunk-0" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/uploads/temp/chunk-1748845145563-edh9webwy/chunk-0" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/uploads/temp/chunk-1748849810591-uxzdqmqoi/chunk-0" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/uploads/temp/chunk-1748849836340-8l2zxj848/chunk-0" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/uploads/temp/chunk-1748850450771-oteptglf7/chunk-0" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/uploads/temp/chunk-1748850817556-8uuj91vxn/chunk-0" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/uploads/temp/chunk-1748850817556-8uuj91vxn/chunk-1" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/uploads/temp/chunk-1748850817556-8uuj91vxn/chunk-2" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/uploads/temp/chunk-1748850836328-rqguil42d/chunk-0" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/uploads/temp/chunk-1748850878736-lvcwobg2q/chunk-0" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/uploads/temp/chunk-1748851098371-ecwork18p/chunk-0" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/uploads/temp/chunk-1748851449809-j0abrmrtr/chunk-0" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/uploads/temp/chunk-1748851595510-cteb6msue/chunk-0" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/uploads/temp/chunk-1748851832275-nzzz9fyx2/chunk-0" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/uploads/temp/chunk-1748852002509-wfvdqarxb/chunk-0" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/uploads/temp/chunk-1748853917271-ryr9z0x00/chunk-0" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/uploads/temp/chunk-1748871405097-ius1wtsi2/chunk-0" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/uploads/temp/chunk-1748871503495-gn81a8635/chunk-0" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/uploads/temp/chunk-1748871547898-9uyhpu8d0/chunk-0" afterPath="" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/test6.py" afterPath="$PROJECT_DIR$/test6.py" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="TRACKING_ENABLED" value="true" />
@@ -509,7 +489,14 @@
       <option name="project" value="LOCAL" />
       <updated>1749045911023</updated>
     </task>
-    <option name="localTasksCounter" value="19" />
+    <task id="LOCAL-00019" summary="删除上传文件的分块残留文件">
+      <created>1749134743947</created>
+      <option name="number" value="00019" />
+      <option name="presentableId" value="LOCAL-00019" />
+      <option name="project" value="LOCAL" />
+      <updated>1749134743948</updated>
+    </task>
+    <option name="localTasksCounter" value="20" />
     <servers />
   </component>
   <component name="TodoView">
@@ -523,9 +510,8 @@
   </component>
   <component name="ToolWindowManager">
     <frame x="-11" y="-11" width="3862" height="2122" extended-state="6" />
-    <editor active="true" />
     <layout>
-      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.16436903" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
+      <window_info id="Project" active="true" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.16436903" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.3295099" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.34895834" sideWeight="0.5281018" order="7" side_tool="true" content_ui="tabs" />
       <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.3295099" sideWeight="0.49787912" order="1" side_tool="false" content_ui="tabs" />
@@ -586,7 +572,8 @@
     <MESSAGE value="1.修复多图上床显示问题&#10;2.修复压缩上传模式" />
     <MESSAGE value="修改正式环境的不指定端口" />
     <MESSAGE value="精简代码" />
-    <option name="LAST_COMMIT_MESSAGE" value="精简代码" />
+    <MESSAGE value="删除上传文件的分块残留文件" />
+    <option name="LAST_COMMIT_MESSAGE" value="删除上传文件的分块残留文件" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
