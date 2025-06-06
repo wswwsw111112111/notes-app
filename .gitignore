@@ -1,6 +1,5 @@
-Uploads/
+uploads/
 instance/
-__pycache__
+__pycache__/
 *.pyc
-venv/
-*.db
+migrations/
