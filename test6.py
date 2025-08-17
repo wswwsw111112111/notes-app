@@ -220,6 +220,59 @@ def gallery_page(note_id):
 def add_note():
     user_id = current_user.id
     data = request.get_json()
+    if 'file' in request.files:
+        file = request.files['file']
+        if file.filename == '':
+            return jsonify({'success': False, 'error': '未选择文件'}), 400
+
+        file_content = file.read()
+        file.seek(0)  # 重置文件指针
+
+        if not allowed_file(file.filename, file_content):
+            return jsonify({'success': False, 'error': '不允许的文件类型'}), 400
+
+        md5_hash = hashlib.md5(file_content).hexdigest()
+        existing_note = Note.query.filter_by(md5=md5_hash, user_id=current_user.id).first()
+
+        if existing_note:
+            return jsonify({'success': False, 'error': '文件已存在 (MD5 相同)'}), 409
+
+        filename = secure_filename(f"{md5_hash}_{file.filename}")
+        file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+
+        try:
+            file.save(file_path)
+        except Exception as e:
+            return jsonify({'success': False, 'error': f'文件保存失败: {str(e)}'}), 500
+
+        ext = os.path.splitext(filename)[1].lower()
+        content_type = 'image' if ext in ['.png', '.jpg', '.jpeg', '.gif'] else 'file'
+
+        new_note = Note(
+            user_id=current_user.id,
+            content_type=content_type,
+            content_data=filename,
+            raw_content=file.filename,  # 原始文件名，用于下载显示
+            file_size=len(file_content),
+            md5=md5_hash,
+            additional_text=request.form.get('additional_text')
+        )
+        db.session.add(new_note)
+        db.session.commit()
+
+        return jsonify({
+            'success': True,
+            'note': {
+                'id': new_note.id,
+                'content_type': new_note.content_type,
+                'content_data': new_note.content_data,
+                'raw_content': new_note.raw_content,
+                'timestamp': new_note.timestamp.isoformat(),
+                'additional_text': new_note.additional_text,
+                'md5': new_note.md5,
+                'file_size': new_note.file_size
+            }
+        })
     if not data or 'type' not in data or 'content' not in data:
         logger.error("Add note failed: Invalid request data")
         return jsonify({'success': False, 'error': '无效的请求数据'}), 400
@@ -684,6 +737,27 @@ def delete_note(note_id):
         db.session.rollback()
         logger.error(f"Delete note failed: Database error - {str(e)}")
         return jsonify({'success': False, 'error': f'数据库错误: {str(e)}'}), 500
+
+
+@app.route('/notes/download/<int:note_id>')
+@login_required
+def download_note(note_id):
+    note = Note.query.get_or_404(note_id)
+    if note.user_id != current_user.id:
+        return jsonify({'success': False, 'error': '无权下载'}), 403
+    if note.content_type not in ['image', 'file', 'zip']:
+        return jsonify({'success': False, 'error': '不支持下载'}), 400
+
+    try:
+        file_path = os.path.join(app.config['UPLOAD_FOLDER'], note.content_data)
+        if not os.path.exists(file_path):
+            return jsonify({'error': '文件不存在'}), 404
+
+        # 强制下载，无论文件类型
+        return send_file(file_path, as_attachment=True, download_name=note.raw_content or note.content_data)
+    except Exception as e:
+        logger.error(f"Download failed: {str(e)}")
+        return jsonify({'success': False, 'error': f'下载失败: {str(e)}'}), 500
 
 
 @app.route('/notes/download_gallery/<int:note_id>')

@@ -2,8 +2,10 @@
 <project version="4">
   <component name="ChangeListManager">
     <list id="90b291b5-4985-4c0c-a340-99686552e9d7" name="Revert: 添加了25行的备注" comment="" />
-    <list default="true" id="e04db567-30f1-467e-87a2-bc5e0c572cc0" name="Default" comment="删除上传文件的分块残留文件">
+    <list default="true" id="e04db567-30f1-467e-87a2-bc5e0c572cc0" name="Default" comment="">
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/templates/notes.html" afterPath="$PROJECT_DIR$/templates/notes.html" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/test6.py" afterPath="$PROJECT_DIR$/test6.py" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="TRACKING_ENABLED" value="true" />
@@ -14,11 +16,11 @@
   </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file leaf-file-name="test6.py" pinned="false" current-in-tab="true">
+      <file leaf-file-name="test6.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/test6.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="1180">
-              <caret line="776" column="0" lean-forward="true" selection-start-line="776" selection-start-column="0" selection-end-line="776" selection-end-column="0" />
+            <state relative-caret-position="781">
+              <caret line="857" column="38" lean-forward="false" selection-start-line="857" selection-start-column="38" selection-end-line="857" selection-end-column="38" />
               <folding>
                 <element signature="e#0#131#0" expanded="true" />
               </folding>
@@ -26,17 +28,31 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="notes.html" pinned="false" current-in-tab="false">
+      <file leaf-file-name="Gtest.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/Gtest.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="208">
+              <caret line="193" column="36" lean-forward="false" selection-start-line="193" selection-start-column="36" selection-end-line="193" selection-end-column="36" />
+              <folding>
+                <element signature="e#0#131#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="notes.html" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/templates/notes.html">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="48932">
-              <caret line="941" column="17" lean-forward="false" selection-start-line="941" selection-start-column="17" selection-end-line="941" selection-end-column="17" />
+            <state relative-caret-position="880">
+              <caret line="782" column="9" lean-forward="true" selection-start-line="782" selection-start-column="9" selection-end-line="782" selection-end-column="9" />
               <folding>
                 <element signature="n#style#0;n#button#1;n#div#1;n#div#0;n#div#0;n#div#0;n#!!top" expanded="true" />
                 <element signature="n#style#0;n#button#2;n#div#1;n#div#0;n#div#0;n#div#0;n#!!top" expanded="true" />
                 <element signature="n#style#0;n#textarea#0;n#div#3;n#div#0;n#!!top" expanded="true" />
                 <element signature="n#style#0;n#input#0;n#div#0;n#!!top" expanded="true" />
                 <element signature="n#style#0;n#div#2;n#!!top" expanded="true" />
+                <element signature="n#style#0;n#button#0;n#div#0;n#div#2;n#!!top" expanded="true" />
+                <element signature="n#style#0;n#button#1;n#div#0;n#div#2;n#!!top" expanded="true" />
               </folding>
             </state>
           </provider>
@@ -64,9 +80,6 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>modalImage.addEventListener</find>
-      <find>.modal-content img</find>
-      <find>.jpg</find>
       <find>note-actions</find>
       <find>upload_ch</find>
       <find>allow</find>
@@ -94,6 +107,9 @@
       <find>url_for</find>
       <find>@app.route('/notes/upload_chunk', methods=['POST'])</find>
       <find>notesDisplay.addEventListener</find>
+      <find>/notes/add</find>
+      <find>notes_pa</find>
+      <find>notes_page</find>
     </findStrings>
   </component>
   <component name="Git.Settings">
@@ -153,14 +169,16 @@
         <option value="$PROJECT_DIR$/static/js/notes.js" />
         <option value="$PROJECT_DIR$/testH5.py" />
         <option value="$PROJECT_DIR$/templates/gallery.html" />
-        <option value="$PROJECT_DIR$/templates/notes.html" />
         <option value="$PROJECT_DIR$/test6.py" />
+        <option value="$PROJECT_DIR$/suanfa.py" />
+        <option value="$PROJECT_DIR$/Gtest.py" />
+        <option value="$PROJECT_DIR$/templates/notes.html" />
       </list>
     </option>
   </component>
   <component name="ProjectFrameBounds" extendedState="6">
-    <option name="x" value="328" />
-    <option name="y" value="276" />
+    <option name="x" value="168" />
+    <option name="y" value="130" />
     <option name="width" value="1346" />
     <option name="height" value="889" />
   </component>
@@ -194,7 +212,7 @@
             <path>
               <item name="notes" type="b2602c69:ProjectViewProjectNode" />
               <item name="notes" type="462c0819:PsiDirectoryNode" />
-              <item name="templates" type="462c0819:PsiDirectoryNode" />
+              <item name="uploads" type="462c0819:PsiDirectoryNode" />
             </path>
           </expand>
           <select />
@@ -204,7 +222,7 @@
   </component>
   <component name="PropertiesComponent">
     <property name="last_opened_file_path" value="$PROJECT_DIR$" />
-    <property name="settings.editor.selected.configurable" value="settings.github" />
+    <property name="settings.editor.selected.configurable" value="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable" />
     <property name="DefaultHtmlFileTemplate" value="HTML File" />
   </component>
   <component name="Push.Settings">
@@ -240,7 +258,24 @@
       </list>
     </option>
   </component>
-  <component name="RunManager" selected="Python.test6">
+  <component name="RunManager" selected="Python.Gtest">
+    <configuration name="Gtest" type="PythonConfigurationType" factoryName="Python" temporary="true">
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <module name="FLASK" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/Gtest.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+    </configuration>
     <configuration name="app" type="PythonConfigurationType" factoryName="Python" temporary="true">
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
@@ -254,23 +289,6 @@
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <module name="FLASK" />
       <option name="SCRIPT_NAME" value="$PROJECT_DIR$/app.py" />
-      <option name="PARAMETERS" value="" />
-      <option name="SHOW_COMMAND_LINE" value="false" />
-      <option name="EMULATE_TERMINAL" value="false" />
-    </configuration>
-    <configuration name="app3" type="PythonConfigurationType" factoryName="Python" temporary="true">
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <envs>
-        <env name="PYTHONUNBUFFERED" value="1" />
-      </envs>
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
-      <option name="IS_MODULE_SDK" value="true" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <module name="FLASK" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/app3.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -328,18 +346,18 @@
     </configuration>
     <list size="5">
       <item index="0" class="java.lang.String" itemvalue="Python.test (1)" />
-      <item index="1" class="java.lang.String" itemvalue="Python.app3" />
-      <item index="2" class="java.lang.String" itemvalue="Python.testH5" />
-      <item index="3" class="java.lang.String" itemvalue="Python.app" />
-      <item index="4" class="java.lang.String" itemvalue="Python.test6" />
+      <item index="1" class="java.lang.String" itemvalue="Python.testH5" />
+      <item index="2" class="java.lang.String" itemvalue="Python.app" />
+      <item index="3" class="java.lang.String" itemvalue="Python.test6" />
+      <item index="4" class="java.lang.String" itemvalue="Python.Gtest" />
     </list>
     <recent_temporary>
       <list size="5">
-        <item index="0" class="java.lang.String" itemvalue="Python.test6" />
-        <item index="1" class="java.lang.String" itemvalue="Python.testH5" />
-        <item index="2" class="java.lang.String" itemvalue="Python.app" />
-        <item index="3" class="java.lang.String" itemvalue="Python.test (1)" />
-        <item index="4" class="java.lang.String" itemvalue="Python.app3" />
+        <item index="0" class="java.lang.String" itemvalue="Python.Gtest" />
+        <item index="1" class="java.lang.String" itemvalue="Python.test6" />
+        <item index="2" class="java.lang.String" itemvalue="Python.testH5" />
+        <item index="3" class="java.lang.String" itemvalue="Python.app" />
+        <item index="4" class="java.lang.String" itemvalue="Python.test (1)" />
       </list>
     </recent_temporary>
   </component>
@@ -498,7 +516,14 @@
       <option name="project" value="LOCAL" />
       <updated>1749134786744</updated>
     </task>
-    <option name="localTasksCounter" value="21" />
+    <task id="LOCAL-00021" summary="删除上传文件的分块残留文件2">
+      <created>1749219048931</created>
+      <option name="number" value="00021" />
+      <option name="presentableId" value="LOCAL-00021" />
+      <option name="project" value="LOCAL" />
+      <updated>1749219048931</updated>
+    </task>
+    <option name="localTasksCounter" value="22" />
     <servers />
   </component>
   <component name="TodoView">
@@ -514,14 +539,14 @@
     <frame x="-11" y="-11" width="3862" height="2122" extended-state="6" />
     <editor active="true" />
     <layout>
-      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.1656946" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
+      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.17232238" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.3295099" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.34895834" sideWeight="0.5281018" order="7" side_tool="true" content_ui="tabs" />
-      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.29562044" sideWeight="0.36956522" order="5" side_tool="false" content_ui="tabs" />
+      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.37226278" sideWeight="0.36956522" order="5" side_tool="false" content_ui="tabs" />
       <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.1684046" sideWeight="0.44830328" order="10" side_tool="false" content_ui="tabs" />
       <window_info id="Python Console" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.3295099" sideWeight="0.49893954" order="8" side_tool="false" content_ui="tabs" />
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
-      <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.26068822" sideWeight="0.4718982" order="9" side_tool="false" content_ui="tabs" />
+      <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.26041666" sideWeight="0.4718982" order="9" side_tool="false" content_ui="tabs" />
       <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.3998465" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="true" content_ui="tabs" />
       <window_info id="Data View" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32979852" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
@@ -576,7 +601,8 @@
     <MESSAGE value="修改正式环境的不指定端口" />
     <MESSAGE value="精简代码" />
     <MESSAGE value="删除上传文件的分块残留文件" />
-    <option name="LAST_COMMIT_MESSAGE" value="删除上传文件的分块残留文件" />
+    <MESSAGE value="删除上传文件的分块残留文件2" />
+    <option name="LAST_COMMIT_MESSAGE" value="删除上传文件的分块残留文件2" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
@@ -585,7 +611,6 @@
     <watches-manager />
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/uploads/images_2.jpg" />
     <entry file="file://$PROJECT_DIR$/uploads/53452def306f2c0e-612201abc104d959-05a3cbbf31818533ee22850e64ad22e4.jpg" />
     <entry file="file://$PROJECT_DIR$/uploads/IMAG0352.jpg" />
     <entry file="file://$PROJECT_DIR$/uploads/43434343443.jpg" />
@@ -786,6 +811,13 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/uploads/20130702_200033.jpg" />
+    <entry file="file://$PROJECT_DIR$/uploads/2013_08_16_13_08_40.jpg" />
+    <entry file="file://$PROJECT_DIR$/uploads/960_800_44a4262e687581d1.jpeg.jpg" />
+    <entry file="file://$PROJECT_DIR$/uploads/23.jpeg" />
+    <entry file="file://$PROJECT_DIR$/testH5.py" />
+    <entry file="file://$PROJECT_DIR$/files.py" />
+    <entry file="file://$PROJECT_DIR$/app.py" />
     <entry file="file://$PROJECT_DIR$/templates/gallery.html">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="5304">
@@ -794,33 +826,38 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/uploads/20130702_200033.jpg" />
-    <entry file="file://$PROJECT_DIR$/uploads/2013_08_16_13_08_40.jpg" />
-    <entry file="file://$PROJECT_DIR$/uploads/960_800_44a4262e687581d1.jpeg.jpg" />
-    <entry file="file://$PROJECT_DIR$/uploads/23.jpeg" />
+    <entry file="file://$PROJECT_DIR$/test6.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="781">
+          <caret line="857" column="38" lean-forward="false" selection-start-line="857" selection-start-column="38" selection-end-line="857" selection-end-column="38" />
+          <folding>
+            <element signature="e#0#131#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/Gtest.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="208">
+          <caret line="193" column="36" lean-forward="false" selection-start-line="193" selection-start-column="36" selection-end-line="193" selection-end-column="36" />
+          <folding>
+            <element signature="e#0#131#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/templates/notes.html">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="48932">
-          <caret line="941" column="17" lean-forward="false" selection-start-line="941" selection-start-column="17" selection-end-line="941" selection-end-column="17" />
+        <state relative-caret-position="880">
+          <caret line="782" column="9" lean-forward="true" selection-start-line="782" selection-start-column="9" selection-end-line="782" selection-end-column="9" />
           <folding>
             <element signature="n#style#0;n#button#1;n#div#1;n#div#0;n#div#0;n#div#0;n#!!top" expanded="true" />
             <element signature="n#style#0;n#button#2;n#div#1;n#div#0;n#div#0;n#div#0;n#!!top" expanded="true" />
             <element signature="n#style#0;n#textarea#0;n#div#3;n#div#0;n#!!top" expanded="true" />
             <element signature="n#style#0;n#input#0;n#div#0;n#!!top" expanded="true" />
             <element signature="n#style#0;n#div#2;n#!!top" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/testH5.py" />
-    <entry file="file://$PROJECT_DIR$/files.py" />
-    <entry file="file://$PROJECT_DIR$/app.py" />
-    <entry file="file://$PROJECT_DIR$/test6.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1180">
-          <caret line="776" column="0" lean-forward="true" selection-start-line="776" selection-start-column="0" selection-end-line="776" selection-end-column="0" />
-          <folding>
-            <element signature="e#0#131#0" expanded="true" />
+            <element signature="n#style#0;n#button#0;n#div#0;n#div#2;n#!!top" expanded="true" />
+            <element signature="n#style#0;n#button#1;n#div#0;n#div#2;n#!!top" expanded="true" />
           </folding>
         </state>
       </provider>

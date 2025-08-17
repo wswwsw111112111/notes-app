@@ -184,8 +184,8 @@
 
 <div class="notes-container">
     <div class="notes-display" id="notesDisplay">
-        {% if notes %}
-            {% for note in notes %}
+        {% if notes and notes.items %}
+            {% for note in notes.items %}
             <div class="note-entry" id="note-{{ note.id }}" data-note-id="{{ note.id }}">
                 <span class="timestamp">
                     {{ note.timestamp.strftime('%Y-%m-%d %H:%M:%S UTC') }}
@@ -194,7 +194,7 @@
                             <span class="file-md5">MD5: {{ note.md5 }}</span>
                         {% endif %}
                         {% if note.file_size %}
-                            <span class="file-size">({{ (note.file_size / 1024) | round(2) }} KB)</span>
+                            <span class="file-size">({{ (note.file_size / (1024*1024)) | round(2) }} MB)</span>
                         {% endif %}
                     {% endif %}
                 </span>
@@ -203,13 +203,15 @@
                         <p class="note-text" data-raw-text="{{ note.content_data | e }}">{{ note.content_data | urlize | safe }}</p>
                     {% elif note.content_type == 'image' %}
                         <img src="{{ url_for('uploaded_file', filename=note.content_data) }}" alt="笔记图片" data-full-src="{{ url_for('uploaded_file', filename=note.content_data) }}" loading="lazy">
-                    {% elif note.content_type == 'file' or note.content_type == 'zip' %}
-                        <a href="{{ url_for('download_zip', note_id=note.id) if note.content_type == 'zip' else url_for('uploaded_file', filename=note.content_data) }}" target="_blank">{{ note.raw_content or note.content_data }}</a>
+                    {% elif note.content_type == 'file' %}
+                        <a href="{{ url_for('download_note', note_id=note.id) }}" target="_blank">{{ note.raw_content or note.content_data }}</a>
+                    {% elif note.content_type == 'zip' %}
+                        <a href="{{ url_for('download_zip', note_id=note.id) }}" target="_blank">{{ note.raw_content or note.content_data }}</a>
                     {% elif note.content_type == 'gallery' %}
                         <a href="{{ url_for('gallery_page', note_id=note.id) }}" class="gallery-icon" title="查看画廊">📁 画廊 ({{ note.content_data | fromjson | length }} 张图片)</a>
                     {% endif %}
                     {% if note.additional_text %}
-                        <p class="additional-text">{{ note.additional_text | urlize | safe }}</p>
+                        <p class="additional-text note-text" data-raw-text="{{ note.additional_text | e }}">{{ note.additional_text | urlize | safe }}</p>
                     {% endif %}
                 </div>
                 <div class="note-actions">
@@ -217,10 +219,11 @@
                     <button class="btn-save" title="保存" style="display: none;">✔</button>
                     <button class="btn-cancel" title="取消" style="display: none;">✖</button>
                     <button class="btn-delete" title="删除">🗑</button>
-                    {% if note.content_type == 'gallery' %}
+                    {% if note.content_type == 'image' or note.content_type == 'file' %}
+                        <a href="{{ url_for('download_note', note_id=note.id) }}" class="btn-download" title="下载">📥</a>
+                    {% elif note.content_type == 'gallery' %}
                         <a href="{{ url_for('download_gallery', note_id=note.id) }}" class="btn-download" title="一键下载">📥</a>
-                    {% endif %}
-                    {% if note.content_type == 'zip' %}
+                    {% elif note.content_type == 'zip' %}
                         <a href="{{ url_for('download_zip', note_id=note.id) }}" class="btn-download" title="一键下载">📥</a>
                     {% endif %}
                 </div>
@@ -231,7 +234,7 @@
         {% endif %}
     </div>
 
-    {% if pagination %}
+    {% if pagination and pagination.pages > 1 %}
     <div class="pagination">
         {% if pagination.has_prev %}
             <a href="{{ url_for('notes_page', page=pagination.prev_num) }}" class="btn btn-secondary">上一页</a>
@@ -247,9 +250,9 @@
     <span class="upload-btn" title="上传文件">➕</span>
     <div class="upload-options">
         <select id="uploadMode">
-            <option value="file">单张上传</option>
-            <option value="gallery">多张图片上传</option>
-            <option value="zip">压缩上传</option>
+            <option value="file" selected>单一上传 (图片/文件)</option>
+            <option value="gallery">画廊上传 (多图)</option>
+            <option value="zip">压缩包上传 (多文件)</option>
         </select>
         <textarea id="additionalText" placeholder="添加备注或说明（可选）" rows="2" style="width: 200px; margin-top: 5px;"></textarea>
     </div>
@@ -264,9 +267,9 @@
 <div id="imageModal" class="modal" style="display: none;">
     <span class="close-btn" title="关闭">×</span>
     <div class="modal-content">
-        <button class="prev-btn">←</button>
+        <button class="prev-btn" style="display:none;">←</button>
         <img id="modalImage" src="" alt="图片预览">
-        <button class="next-btn">→</button>
+        <button class="next-btn" style="display:none;">→</button>
     </div>
 </div>
 {% endblock %}
@@ -280,7 +283,7 @@
     const fileUpload = document.getElementById('fileUpload');
     const uploadBtn = document.querySelector('.upload-btn');
     const uploadMode = document.getElementById('uploadMode');
-    const additionalText = document.getElementById('additionalText'); // 添加附加文本输入框引用
+    const additionalText = document.getElementById('additionalText');
     const modal = document.getElementById('imageModal');
     const modalImage = document.getElementById('modalImage');
     const closeBtn = document.querySelector('.close-btn');
@@ -300,86 +303,43 @@
     document.addEventListener('DOMContentLoaded', () => {
         if (modal) {
             modal.style.display = 'none';
-        } else {
-            console.error('Modal element not found');
         }
 
         notesDisplay.addEventListener('click', (event) => {
             if (event.target.tagName === 'IMG' && event.target.dataset.fullSrc) {
-                const noteDiv = event.target.closest('.note-entry');
                 currentGalleryImages = [event.target.dataset.fullSrc];
                 currentImageIndex = 0;
                 modal.style.display = 'flex';
                 modalImage.src = currentGalleryImages[currentImageIndex];
-                scale = 1;
-                initialX = 0;
-                initialY = 0;
-                modalImage.style.transform = `scale(${scale}) translate(${initialX}px, ${initialY}px)`;
+                resetModalTransform();
             }
         });
 
-        closeBtn.addEventListener('click', () => {
-            modal.style.display = 'none';
-            modalImage.src = '';
-            modalImage.style.transform = 'scale(1) translate(0px, 0px)';
-            scale = 1;
-            initialX = 0;
-            initialY = 0;
-            currentGalleryImages = [];
-            currentImageIndex = 0;
-        });
-
+        closeBtn.addEventListener('click', closeModal);
         modal.addEventListener('click', (event) => {
             if (event.target === modal) {
-                modal.style.display = 'none';
-                modalImage.src = '';
-                modalImage.style.transform = 'scale(1) translate(0px, 0px)';
-                scale = 1;
-                initialX = 0;
-                initialY = 0;
-                currentGalleryImages = [];
-                currentImageIndex = 0;
+                closeModal();
             }
         });
+    });
 
-        document.addEventListener('keydown', (event) => {
-            if (event.key === 'Escape' && modal.style.display === 'flex') {
-                if (scale !== 1 || initialX !== 0 || initialY !== 0) {
-                    scale = 1;
-                    initialX = 0;
-                    initialY = 0;
-                    modalImage.style.transform = `scale(${scale}) translate(${initialX}px, ${initialY}px)`;
-                } else {
-                    modal.style.display = 'none';
-                    modalImage.src = '';
-                    modalImage.style.transform = 'scale(1) translate(0px, 0px)';
-                    currentGalleryImages = [];
-                    currentImageIndex = 0;
-                }
-            }
-        });
+    function closeModal() {
+        modal.style.display = 'none';
+        modalImage.src = '';
+        resetModalTransform();
+    }
 
-        document.querySelector('.prev-btn').addEventListener('click', () => {
-            if (currentImageIndex > 0) {
-                currentImageIndex--;
-                modalImage.src = currentGalleryImages[currentImageIndex];
-                scale = 1;
-                initialX = 0;
-                initialY = 0;
-                modalImage.style.transform = `scale(${scale}) translate(${initialX}px, ${initialY}px)`;
-            }
-        });
+    function resetModalTransform() {
+        scale = 1;
+        initialX = 0;
+        initialY = 0;
+        modalImage.style.transform = `scale(1) translate(0px, 0px)`;
+    }
 
-        document.querySelector('.next-btn').addEventListener('click', () => {
-            if (currentImageIndex < currentGalleryImages.length - 1) {
-                currentImageIndex++;
-                modalImage.src = currentGalleryImages[currentImageIndex];
-                scale = 1;
-                initialX = 0;
-                initialY = 0;
-                modalImage.style.transform = `scale(${scale}) translate(${initialX}px, ${initialY}px)`;
-            }
-        });
+    document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && modal.style.display === 'flex') {
+            closeModal();
+        }
     });
 
     modalImage.addEventListener('wheel', (event) => {
@@ -392,74 +352,43 @@
         const newScale = Math.min(maxScale, Math.max(minScale, scale + delta));
         if (newScale === scale) return;
 
-        const offsetX = (mouseX - rect.width / 2) / scale;
-        const offsetY = (mouseY - rect.height / 2) / scale;
-
         const scaleRatio = newScale / scale;
-        initialX = initialX * scaleRatio - offsetX * (newScale - scale);
-        initialY = initialY * scaleRatio - offsetY * (newScale - scale);
+        initialX = initialX * scaleRatio - (mouseX * scaleRatio - mouseX);
+        initialY = initialY * scaleRatio - (mouseY * scaleRatio - mouseY);
 
         scale = newScale;
         modalImage.style.transform = `scale(${scale}) translate(${initialX}px, ${initialY}px)`;
     });
 
     modalImage.addEventListener('mousedown', (event) => {
-        if (scale <= 1) return;
+        if (event.button !== 0) return; // Only main button
         isDragging = true;
-        startX = event.clientX;
-        startY = event.clientY;
-        const transform = modalImage.style.transform.match(/translate\(([^)]+)\)/);
-        if (transform) {
-            const [x, y] = transform[1].split(',').map(val => parseFloat(val));
-            initialX = x || 0;
-            initialY = y || 0;
-        }
+        startX = event.clientX - initialX;
+        startY = event.clientY - initialY;
         modalImage.style.cursor = 'grabbing';
     });
 
     modalImage.addEventListener('mousemove', (event) => {
         if (!isDragging) return;
         event.preventDefault();
-        const dx = event.clientX - startX;
-        const dy = event.clientY - startY;
-        modalImage.style.transform = `scale(${scale}) translate(${initialX + dx}px, ${initialY + dy}px)`;
+        initialX = event.clientX - startX;
+        initialY = event.clientY - startY;
+        modalImage.style.transform = `scale(${scale}) translate(${initialX}px, ${initialY}px)`;
     });
 
-    modalImage.addEventListener('mouseup', () => {
-        isDragging = false;
-        const transform = modalImage.style.transform.match(/translate\(([^)]+)\)/);
-        if (transform) {
-            const [x, y] = transform[1].split(',').map(val => parseFloat(val));
-            initialX = x || 0;
-            initialY = y || 0;
-        }
-        modalImage.style.cursor = 'grab';
-    });
-
-    modalImage.addEventListener('mouseleave', () => {
-        isDragging = false;
-        modalImage.style.cursor = 'grab';
-    });
+    modalImage.addEventListener('mouseup', () => { isDragging = false; modalImage.style.cursor = 'grab'; });
+    modalImage.addEventListener('mouseleave', () => { isDragging = false; modalImage.style.cursor = 'grab'; });
 
     modalImage.addEventListener('touchstart', (event) => {
         if (event.touches.length === 2) {
             event.preventDefault();
             const touch1 = event.touches[0];
             const touch2 = event.touches[1];
-            pinchStartDistance = Math.hypot(
-                touch1.pageX - touch2.pageX,
-                touch1.pageY - touch2.pageY
-            );
-        } else if (event.touches.length === 1 && scale > 1) {
+            pinchStartDistance = Math.hypot(touch1.pageX - touch2.pageX, touch1.pageY - touch2.pageY);
+        } else if (event.touches.length === 1) {
             isDragging = true;
-            startX = event.touches[0].clientX;
-            startY = event.touches[0].clientY;
-            const transform = modalImage.style.transform.match(/translate\(([^)]+)\)/);
-            if (transform) {
-                const [x, y] = transform[1].split(',').map(val => parseFloat(val));
-                initialX = x || 0;
-                initialY = y || 0;
-            }
+            startX = event.touches[0].clientX - initialX;
+            startY = event.touches[0].clientY - initialY;
         }
     });
 
@@ -468,36 +397,29 @@
             event.preventDefault();
             const touch1 = event.touches[0];
             const touch2 = event.touches[1];
-            const currentDistance = Math.hypot(
-                touch1.pageX - touch2.pageX,
-                touch1.pageY - touch2.pageY
-            );
+            const currentDistance = Math.hypot(touch1.pageX - touch2.pageX, touch1.pageY - touch2.pageY);
             const newScale = scale * (currentDistance / pinchStartDistance);
             if (newScale >= minScale && newScale <= maxScale) {
+                // Future improvement: pinch-zoom around center point
                 scale = newScale;
                 modalImage.style.transform = `scale(${scale}) translate(${initialX}px, ${initialY}px)`;
             }
             pinchStartDistance = currentDistance;
         } else if (event.touches.length === 1 && isDragging) {
             event.preventDefault();
-            const dx = event.touches[0].clientX - startX;
-            const dy = event.touches[0].clientY - startY;
-            modalImage.style.transform = `scale(${scale}) translate(${initialX + dx}px, ${initialY + dy}px)`;
+            initialX = event.touches[0].clientX - startX;
+            initialY = event.touches[0].clientY - startY;
+            modalImage.style.transform = `scale(${scale}) translate(${initialX}px, ${initialY}px)`;
         }
     });
 
     modalImage.addEventListener('touchend', () => {
         isDragging = false;
         pinchStartDistance = 0;
-        const transform = modalImage.style.transform.match(/translate\(([^)]+)\)/);
-        if (transform) {
-            const [x, y] = transform[1].split(',').map(val => parseFloat(val));
-            initialX = x || 0;
-            initialY = y || 0;
-        }
     });
 
     uploadBtn.addEventListener('click', () => {
+        fileUpload.multiple = (uploadMode.value !== 'file');
         fileUpload.click();
     });
 
@@ -508,28 +430,24 @@
         const mode = uploadMode.value;
         if (mode === 'file') {
             if (files.length > 1) {
-                showError('单张上传模式下只能选择一个文件！');
-                fileUpload.value = '';
+                showError('单一上传模式一次只能选择一个文件！');
                 return;
             }
             uploadFileInChunks(files[0]);
         } else if (mode === 'gallery') {
             if (files.length > 30) {
                 showError('一次最多上传 30 张图片！');
-                fileUpload.value = '';
                 return;
             }
             const validFiles = files.filter(file => ['image/png', 'image/jpeg', 'image/gif'].includes(file.type));
             if (validFiles.length !== files.length) {
-                showError('画廊模式仅支持图片格式（.png, .jpg, .jpeg, .gif）！');
-                fileUpload.value = '';
+                showError('画廊模式仅支持图片格式！');
                 return;
             }
             uploadMultipleFiles(validFiles, mode);
         } else if (mode === 'zip') {
             if (files.length > 30) {
                 showError('一次最多上传 30 个文件！');
-                fileUpload.value = '';
                 return;
             }
             uploadMultipleFiles(files, mode);
@@ -541,14 +459,8 @@
         const chunkSize = CHUNK_SIZE;
         const totalChunks = Math.ceil(file.size / chunkSize);
         const chunkId = `chunk-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-        const filename = file.name.toLowerCase();
+        const filename = file.name;
         const mode = uploadMode.value;
-
-        const allowedTypes = ['image/png', 'image/jpeg', 'image/gif', 'application/pdf', 'text/plain', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/zip', 'video/mp4'];
-        if (!allowedTypes.includes(file.type)) {
-            showError('不支持的文件类型！');
-            return null;
-        }
 
         const progressBar = document.getElementById('progressBar');
         const progressText = document.getElementById('progressText');
@@ -562,7 +474,6 @@
             const start = i * chunkSize;
             const end = Math.min(start + chunkSize, file.size);
             const chunk = file.slice(start, end);
-
             const formData = new FormData();
             formData.append('chunk', chunk, filename);
             formData.append('filename', filename);
@@ -570,7 +481,7 @@
             formData.append('totalChunks', totalChunks);
             formData.append('chunkId', chunkId);
             formData.append('mode', mode);
-            formData.append('additional_text', additionalText.value || ''); // 添加附加文本
+            formData.append('additional_text', additionalText.value || '');
 
             try {
                 const response = await fetch('/notes/upload_chunk', {
@@ -580,7 +491,7 @@
                 });
                 const result = await response.json();
                 if (!result.success) {
-                    showError(`上传失败: ${result.error || '未知错误'} (文件: ${filename})`);
+                    showError(`上传失败: ${result.error || '未知错误'}`);
                     progressContainer.style.display = 'none';
                     return null;
                 }
@@ -590,10 +501,8 @@
                 if (i === totalChunks - 1) {
                     if (mode === 'gallery') {
                         return {
-                            content: result.content,
-                            raw_content: result.raw_content,
-                            file_size: result.file_size,
-                            md5: result.md5
+                            content: result.content, raw_content: result.raw_content,
+                            file_size: result.file_size, md5: result.md5
                         };
                     } else if (result.note) {
                         addNoteToDisplay(result.note);
@@ -602,7 +511,7 @@
                     }
                 }
             } catch (error) {
-                showError(`上传分片时出错: ${error.message} (文件: ${filename})`);
+                showError(`上传分片时出错: ${error.message}`);
                 progressContainer.style.display = 'none';
                 return null;
             }
@@ -613,9 +522,7 @@
 
     async function compressAndUploadFiles(files) {
         const zip = new JSZip();
-        files.forEach(file => {
-            zip.file(file.name, file);
-        });
+        files.forEach(file => zip.file(file.name, file));
         const dateStr = new Date().toISOString().split('T')[0].replace(/-/g, '');
         const zipBlob = await zip.generateAsync({ type: 'blob' });
         const zipFile = new File([zipBlob], `${dateStr}-${files.length}.zip`, { type: 'application/zip' });
@@ -628,32 +535,22 @@
             return;
         }
         const fileData = [];
-        const totalFiles = files.length;
-        let uploadedFiles = 0;
         for (const file of files) {
             const result = await uploadFileInChunks(file);
             if (result) {
                 fileData.push(result);
             }
-            uploadedFiles++;
-            const progress = Math.round((uploadedFiles / totalFiles) * 100);
-            document.getElementById('progressBar').style.width = `${progress}%`;
-            document.getElementById('progressText').textContent = `${progress}%`;
         }
         if (mode === 'gallery' && fileData.length > 0) {
             try {
                 const response = await fetch('/notes/add_multiple', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-Token': csrfToken
-                    },
+                    headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
                     body: JSON.stringify({ mode: 'gallery', file_data: fileData, additional_text: additionalText.value || '' })
                 });
                 const result = await response.json();
                 if (result.success && result.note) {
                     addNoteToDisplay(result.note);
-                    notesDisplay.scrollTop = 0;
                 } else {
                     showError(`保存画廊笔记失败: ${result.error || '未知错误'}`);
                 }
@@ -666,13 +563,10 @@
 
     noteInput.addEventListener('paste', (event) => {
         const items = (event.clipboardData || window.clipboardData).items;
-        let pastedText = event.clipboardData.getData('text/plain');
-        let foundImage = false;
         for (let i = 0; i < items.length; i++) {
             if (items[i].type.indexOf('image') !== -1) {
                 const blob = items[i].getAsFile();
                 if (!blob) continue;
-                foundImage = true;
                 event.preventDefault();
                 const reader = new FileReader();
                 reader.onload = function(loadEvent) {
@@ -680,16 +574,8 @@
                     sendNoteData('image', loadEvent.target.result, tempFileName);
                 };
                 reader.readAsDataURL(blob);
-                if (pastedText.trim()) {
-                    sendNoteData('text', pastedText.trim());
-                    pastedText = '';
-                }
                 break;
             }
-        }
-        if (!foundImage && pastedText.trim()) {
-            event.preventDefault();
-            sendNoteData('text', pastedText.trim());
         }
     });
 
@@ -705,21 +591,16 @@
     });
 
     async function sendNoteData(type, content, filename) {
-        const data = { type, content };
-        if (filename) data.filename = filename;
+        const data = { type, content, filename, additional_text: additionalText.value };
         try {
             const response = await fetch('/notes/add', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-Token': csrfToken
-                },
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
                 body: JSON.stringify(data)
             });
             const result = await response.json();
             if (result.success && result.note) {
                 addNoteToDisplay(result.note);
-                notesDisplay.scrollTop = 0;
             } else {
                 showError('添加笔记失败: ' + (result.error || '未知错误'));
             }
@@ -729,103 +610,71 @@
     }
 
     function addNoteToDisplay(note) {
+        const noNotes = notesDisplay.querySelector('.no-notes');
+        if (noNotes) {
+            notesDisplay.innerHTML = '';
+        }
         const noteDiv = document.createElement('div');
         noteDiv.className = 'note-entry';
         noteDiv.id = `note-${note.id}`;
         noteDiv.dataset.noteId = note.id;
-        const timeSpan = document.createElement('span');
-        timeSpan.className = 'timestamp';
-        timeSpan.textContent = new Date(note.timestamp).toLocaleString() + ' UTC';
-        if (note.type === 'image' || note.type === 'file' || note.type === 'zip' || note.type === 'gallery') {
-            if (note.md5) {
-                const md5Span = document.createElement('span');
-                md5Span.className = 'file-md5';
-                md5Span.textContent = `MD5: ${note.md5}`;
-                timeSpan.appendChild(md5Span);
-            }
-            if (note.file_size) {
-                const sizeSpan = document.createElement('span');
-                sizeSpan.className = 'file-size';
-                sizeSpan.textContent = `(${formatFileSize(note.file_size)})`;
-                timeSpan.appendChild(sizeSpan);
-            }
-        }
-        noteDiv.appendChild(timeSpan);
-        const contentDiv = document.createElement('div');
-        contentDiv.className = 'note-content';
-        noteDiv.appendChild(contentDiv);
-        const actionsDiv = document.createElement('div');
-        actionsDiv.className = 'note-actions';
-        noteDiv.appendChild(actionsDiv);
+
+        const timestampHtml = `
+            <span class="timestamp">
+                ${new Date(note.timestamp).toLocaleString('sv-SE')} UTC
+                ${note.md5 ? `<span class="file-md5">MD5: ${note.md5}</span>` : ''}
+                ${note.file_size ? `<span class="file-size">(${(note.file_size / (1024*1024)).toFixed(2)} MB)</span>` : ''}
+            </span>`;
+
+        let contentHtml = '';
         if (note.type === 'text') {
-            const p = document.createElement('p');
-            p.className = 'note-text';
-            p.setAttribute('data-raw-text', note.content);
-            p.innerHTML = convertUrlsToLinks(note.content);
-            contentDiv.appendChild(p);
-            actionsDiv.innerHTML = `
+            contentHtml = `<p class="note-text" data-raw-text="${escapeHtml(note.content)}">${convertUrlsToLinks(note.content)}</p>`;
+        } else if (note.type === 'image') {
+            contentHtml = `<img src="${note.content}" alt="笔记图片" data-full-src="${note.content}" loading="lazy">`;
+        } else if (note.type === 'file') {
+            contentHtml = `<a href="/notes/download/${note.id}" target="_blank">${escapeHtml(note.raw_content) || '下载文件'}</a>`;
+        } else if (note.type === 'gallery') {
+            contentHtml = `<a href="/notes/gallery/${note.id}" class="gallery-icon" title="查看画廊">📁 画廊 (${note.content.length} 张图片)</a>`;
+        } else if (note.type === 'zip') {
+             contentHtml = `<a href="/notes/download_zip/${note.id}" target="_blank">${escapeHtml(note.raw_content) || '下载压缩包'}</a>`;
+        }
+        if (note.additional_text) {
+             contentHtml += `<p class="additional-text note-text" data-raw-text="${escapeHtml(note.additional_text)}">${convertUrlsToLinks(note.additional_text)}</p>`;
+        }
+
+        let downloadLink = '';
+        if (note.type === 'image' || note.type === 'file') downloadLink = `<a href="/notes/download/${note.id}" class="btn-download" title="下载">📥</a>`;
+        else if (note.type === 'gallery') downloadLink = `<a href="/notes/download_gallery/${note.id}" class="btn-download" title="一键下载">📥</a>`;
+        else if (note.type === 'zip') downloadLink = `<a href="/notes/download_zip/${note.id}" class="btn-download" title="一键下载">📥</a>`;
+
+        const actionsHtml = `
+            <div class="note-actions">
                 <button class="btn-edit" title="编辑">✎</button>
                 <button class="btn-save" title="保存" style="display: none;">✔</button>
                 <button class="btn-cancel" title="取消" style="display: none;">✖</button>
-                <button class="btn-delete" title="删除">🗑</button>`;
-        } else if (note.type === 'image') {
-            const img = document.createElement('img');
-            img.src = note.content;
-            img.alt = '笔记图片';
-            img.dataset.fullSrc = note.content;
-            contentDiv.appendChild(img);
-            actionsDiv.innerHTML = `<button class="btn-delete" title="删除">🗑</button>`;
-        } else if (note.type === 'file' || note.type === 'zip') {
-            const a = document.createElement('a');
-            a.href = note.content;
-            a.textContent = note.raw_content || '下载文件';
-            a.target = '_blank';
-            contentDiv.appendChild(a);
-            actionsDiv.innerHTML = `<button class="btn-delete" title="删除">🗑</button>`;
-        } else if (note.type === 'gallery') {
-            const a = document.createElement('a');
-            a.href = `/notes/gallery/${note.id}`;
-            a.className = 'gallery-icon';
-            a.title = '查看画廊';
-            a.textContent = `📁 画廊 (${note.content.length} 张图片)`;
-            contentDiv.appendChild(a);
-            actionsDiv.innerHTML = `
                 <button class="btn-delete" title="删除">🗑</button>
-                <a href="/notes/download_gallery/${note.id}" class="btn-download" title="一键下载">📥</a>`;
-        }
-        if (note.additional_text) {
-            const p = document.createElement('p');
-            p.className = 'additional-text';
-            p.setAttribute('data-raw-text', note.additional_text);
-            p.innerHTML = convertUrlsToLinks(note.additional_text);
-            contentDiv.appendChild(p);
-            actionsDiv.innerHTML += `
-                <button class="btn-edit" title="编辑">✎</button>
-                <button class="btn-save" title="保存" style="display: none;">✔</button>
-                <button class="btn-cancel" title="取消" style="display: none;">✖</button>`;
-        }
+                ${downloadLink}
+            </div>`;
+
+        noteDiv.innerHTML = `${timestampHtml}<div class="note-content">${contentHtml}</div>${actionsHtml}`;
         notesDisplay.insertBefore(noteDiv, notesDisplay.firstChild);
-        notesDisplay.scrollTop = 0;
     }
 
-    function formatFileSize(bytes) {
-        if (bytes < 1024) return bytes + ' B';
-        else if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(2) + ' KB';
-        else if (bytes < 1024 * 1024 * 1024) return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
-        else return (bytes / (1024 * 1024 * 1024)).toFixed(2) + ' GB';
+    function escapeHtml(text) {
+        if (typeof text !== 'string') return '';
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
     }
 
     function convertUrlsToLinks(text) {
+        if (!text) return '';
         const urlPattern = /(https?:\/\/[^\s<]+[^<.,:;"')\]\s])/g;
-        return text.replace(urlPattern, '<a href="$1" target="_blank">$1</a>').replace(/\n/g, '<br>');
+        return escapeHtml(text).replace(urlPattern, '<a href="$1" target="_blank">$1</a>').replace(/\n/g, '<br>');
     }
 
     function showError(message) {
-        const alertDiv = document.createElement('div');
-        alertDiv.className = 'alert alert-danger alert-dismissible fade show';
-        alertDiv.innerHTML = `${message} <button type="button" class="btn-close" data-bs-dismiss="alert"></button>`;
-        document.body.insertBefore(alertDiv, document.body.firstChild);
-        setTimeout(() => alertDiv.remove(), 5000);
+        alert(message);
     }
 
     notesDisplay.addEventListener('click', async (event) => {
@@ -839,57 +688,48 @@
                 showError('请先保存或取消当前编辑的笔记！');
                 return;
             }
-            if (noteDiv.classList.contains('editing')) return;
             noteDiv.classList.add('editing');
             currentEditingNote = noteDiv;
             const contentDiv = noteDiv.querySelector('.note-content');
-            let textElement = contentDiv.querySelector('.note-text, .additional-text');
-            let rawText = textElement ? textElement.dataset.rawText || textElement.textContent : '';
-            const textarea = document.createElement('textarea');
-            textarea.value = rawText;
-            if (textElement) textElement.style.display = 'none';
-            contentDiv.appendChild(textarea);
-            textarea.focus();
+            const textElements = contentDiv.querySelectorAll('.note-text');
+
+            textElements.forEach(el => {
+                const rawText = el.dataset.rawText || '';
+                const textarea = document.createElement('textarea');
+                textarea.value = rawText;
+                el.style.display = 'none';
+                el.after(textarea);
+                textarea.focus();
+            });
+
             noteDiv.querySelector('.btn-save').style.display = 'inline-block';
             noteDiv.querySelector('.btn-cancel').style.display = 'inline-block';
-            noteDiv.querySelector('.btn-edit').style.display = 'none';
+            target.style.display = 'none';
             noteDiv.querySelector('.btn-delete').style.display = 'none';
+
         } else if (target.classList.contains('btn-save')) {
             const textarea = noteDiv.querySelector('textarea');
             const newContent = textarea.value.trim();
-            if (!newContent) {
-                showError('内容不能为空');
-                return;
-            }
+
             try {
                 const response = await fetch(`/notes/edit/${noteId}`, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-Token': csrfToken
-                    },
+                    headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
                     body: JSON.stringify({ content: newContent })
                 });
                 const result = await response.json();
                 if (result.success) {
-                    const contentDiv = noteDiv.querySelector('.note-content');
-                    let textElement = contentDiv.querySelector('.note-text, .additional-text');
-                    if (!textElement) {
-                        textElement = document.createElement('p');
-                        textElement.className = 'additional-text';
-                        contentDiv.appendChild(textElement);
-                    }
-                    textElement.textContent = newContent;
-                    textElement.dataset.rawText = newContent;
-                    textElement.innerHTML = convertUrlsToLinks(newContent);
-                    if (contentDiv.querySelector('.note-text')) contentDiv.querySelector('.note-text').style.display = 'block';
-                    noteDiv.querySelector('.btn-save').style.display = 'none';
-                    noteDiv.querySelector('.btn-cancel').style.display = 'none';
+                    const textElement = noteDiv.querySelector('.note-text');
+                    textElement.innerHTML = convertUrlsToLinks(result.new_content);
+                    textElement.dataset.rawText = result.new_content;
+                    textElement.style.display = 'block';
+                    noteDiv.querySelector('.timestamp').textContent = new Date(result.new_timestamp).toLocaleString('sv-SE') + ' UTC';
+                    textarea.remove();
+                    noteDiv.classList.remove('editing');
                     noteDiv.querySelector('.btn-edit').style.display = 'inline-block';
                     noteDiv.querySelector('.btn-delete').style.display = 'inline-block';
-                    noteDiv.querySelector('.timestamp').textContent = new Date(result.new_timestamp).toLocaleString() + ' UTC';
-                    noteDiv.classList.remove('editing');
-                    textarea.remove();
+                    target.style.display = 'none';
+                    noteDiv.querySelector('.btn-cancel').style.display = 'none';
                     currentEditingNote = null;
                 } else {
                     showError('编辑失败: ' + (result.error || '未知错误'));
@@ -897,18 +737,17 @@
             } catch (error) {
                 showError('编辑笔记时出错: ' + error.message);
             }
+
         } else if (target.classList.contains('btn-cancel')) {
+            noteDiv.querySelectorAll('textarea').forEach(ta => ta.remove());
+            noteDiv.querySelectorAll('.note-text').forEach(el => el.style.display = 'block');
             noteDiv.classList.remove('editing');
-            const textarea = noteDiv.querySelector('textarea');
-            const contentDiv = noteDiv.querySelector('.note-content');
-            let textElement = contentDiv.querySelector('.note-text, .additional-text');
-            if (textElement) textElement.style.display = 'block';
-            textarea.remove();
-            noteDiv.querySelector('.btn-save').style.display = 'none';
-            noteDiv.querySelector('.btn-cancel').style.display = 'none';
             noteDiv.querySelector('.btn-edit').style.display = 'inline-block';
             noteDiv.querySelector('.btn-delete').style.display = 'inline-block';
+            noteDiv.querySelector('.btn-save').style.display = 'none';
+            target.style.display = 'none';
             currentEditingNote = null;
+
         } else if (target.classList.contains('btn-delete')) {
             if (!confirm('确定删除此笔记？')) return;
             try {
