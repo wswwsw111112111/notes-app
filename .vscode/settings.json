@@ -1,0 +1,7 @@
+{
+    "python.defaultInterpreterPath": "C:\\Users\\Administrator\\miniconda3\\python.exe",
+    "python.terminal.activateEnvironment": true,
+    "python.analysis.extraPaths": [
+        "C:\\Users\\Administrator\\miniconda3\\Lib\\site-packages"
+    ]
+} 

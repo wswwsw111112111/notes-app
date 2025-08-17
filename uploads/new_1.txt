@@ -1,0 +1,104 @@
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <tensorflow/lite/c/c_api.h>  // TensorFlow Lite C API 头文件
+
+// 函数声明
+void load_and_run_model(const char* model_path, float w, float z);
+
+int main() {
+    // 测试输入信号 w 和 z
+    float w = 50.0f;  // 示例 w 输入
+    float z = 9500.0f; // 示例 z 输入
+
+    // 加载并运行模型
+    load_and_run_model("model.tflite", w, z);
+
+    return 0;
+}
+
+void load_and_run_model(const char* model_path, float w, float z) {
+    // 加载 TensorFlow Lite 模型
+    TfLiteModel* model = TfLiteModelCreateFromFile(model_path);
+    if (model == NULL) {
+        printf("Failed to load model: %s\n", model_path);
+        exit(1);
+    }
+
+    // 创建解释器
+    TfLiteInterpreterOptions* options = TfLiteInterpreterOptionsCreate();
+    TfLiteInterpreter* interpreter = TfLiteInterpreterCreate(model, options);
+    if (interpreter == NULL) {
+        printf("Failed to create interpreter\n");
+        TfLiteModelDelete(model);
+        exit(1);
+    }
+
+    // 分配张量
+    if (TfLiteInterpreterAllocateTensors(interpreter) != kTfLiteOk) {
+        printf("Failed to allocate tensors\n");
+        TfLiteInterpreterDelete(interpreter);
+        TfLiteModelDelete(model);
+        exit(1);
+    }
+
+    // 获取输入张量信息
+    TfLiteTensor* input_tensor = TfLiteInterpreterGetInputTensor(interpreter, 0);
+    if (input_tensor == NULL) {
+        printf("Failed to get input tensor\n");
+        TfLiteInterpreterDelete(interpreter);
+        TfLiteModelDelete(model);
+        exit(1);
+    }
+
+    // 检查输入张量维度
+    if (TfLiteTensorNumDims(input_tensor) != 2 || TfLiteTensorDim(input_tensor, 0) != 1 || TfLiteTensorDim(input_tensor, 1) != 2) {
+        printf("Unexpected input tensor dimensions\n");
+        TfLiteInterpreterDelete(interpreter);
+        TfLiteModelDelete(model);
+        exit(1);
+    }
+
+    // 设置输入数据 [w, z]
+    float input_data[2] = {w, z};
+    if (TfLiteTensorCopyFromBuffer(input_tensor, input_data, sizeof(input_data)) != kTfLiteOk) {
+        printf("Failed to copy input data\n");
+        TfLiteInterpreterDelete(interpreter);
+        TfLiteModelDelete(model);
+        exit(1);
+    }
+
+    // 执行推理
+    if (TfLiteInterpreterInvoke(interpreter) != kTfLiteOk) {
+        printf("Failed to invoke interpreter\n");
+        TfLiteInterpreterDelete(interpreter);
+        TfLiteModelDelete(model);
+        exit(1);
+    }
+
+    // 获取输出张量
+    const TfLiteTensor* output_tensor = TfLiteInterpreterGetOutputTensor(interpreter, 0);
+    if (output_tensor == NULL) {
+        printf("Failed to get output tensor\n");
+        TfLiteInterpreterDelete(interpreter);
+        TfLiteModelDelete(model);
+        exit(1);
+    }
+
+    // 读取输出数据
+    float output_data;
+    if (TfLiteTensorCopyToBuffer(output_tensor, &output_data, sizeof(output_data)) != kTfLiteOk) {
+        printf("Failed to copy output data\n");
+        TfLiteInterpreterDelete(interpreter);
+        TfLiteModelDelete(model);
+        exit(1);
+    }
+
+    // 打印推理结果
+    printf("Prediction: %f (Threshold: %s)\n", output_data, output_data > 0.5 ? "True" : "False");
+
+    // 释放资源
+    TfLiteInterpreterDelete(interpreter);
+    TfLiteModelDelete(model);
+}
+
