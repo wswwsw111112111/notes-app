@@ -1,5 +1,18 @@
-uploads/
+# 数据库文件
+notes_app.db
 instance/
+
+# Python 缓存
 __pycache__/
 *.pyc
+
+# 虚拟环境文件夹 (如果项目根目录有的话)
+venv/
+.venv/
+
+# 用户上传的文件夹 (非常重要！)
+Uploads/
+
+# 数据库迁移文件夹 (通常只在本地和测试环境需要)
 migrations/
+instance/notes_app.db
