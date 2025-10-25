@@ -1,0 +1,290 @@
+{% extends "base.html" %}
+{% block title %}兑换码管理 - 后台{% endblock %}
+
+{% block content %}
+<style>
+.admin-container { max-width: 1400px; margin: 20px auto; padding: 20px; }
+.admin-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+.admin-header h1 { margin: 0; color: #333; }
+.nav-links { display: flex; gap: 10px; }
+.nav-link { background-color: #6c757d; color: white; padding: 10px 20px; border-radius: 5px; text-decoration: none; }
+.nav-link:hover { background-color: #5a6268; }
+
+/* 生成兑换码表单 */
+.generate-section { background-color: white; border-radius: 10px; padding: 25px; margin-bottom: 30px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+.form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px; }
+.form-group { display: flex; flex-direction: column; }
+.form-group label { font-weight: bold; margin-bottom: 5px; color: #555; }
+.form-group input, .form-group select { padding: 10px; border: 1px solid #ccc; border-radius: 5px; font-size: 1em; }
+.generate-btn { padding: 12px 30px; background-color: #4caf50; color: white; border: none; border-radius: 5px; font-size: 1em; font-weight: bold; cursor: pointer; }
+.generate-btn:hover { background-color: #45a049; }
+
+/* 生成结果 */
+.generated-codes { background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin-top: 20px; display: none; }
+.generated-codes h4 { margin-top: 0; color: #333; }
+.codes-list { background-color: white; padding: 15px; border-radius: 5px; max-height: 300px; overflow-y: auto; font-family: monospace; line-height: 1.8; }
+.code-item { padding: 5px; border-bottom: 1px dashed #ddd; }
+.code-item:last-child { border-bottom: none; }
+.copy-all-btn { margin-top: 10px; padding: 8px 20px; background-color: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; }
+.copy-all-btn:hover { background-color: #0056b3; }
+
+/* 兑换码列表 */
+.codes-table { width: 100%; border-collapse: collapse; background-color: white; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+.codes-table th, .codes-table td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+.codes-table th { background-color: #f8f9fa; font-weight: bold; color: #333; }
+.codes-table tr:hover { background-color: #f5f5f5; }
+.badge { padding: 4px 10px; border-radius: 3px; font-size: 0.85em; font-weight: bold; white-space: nowrap; }
+.badge-unused { background-color: #4caf50; color: white; }
+.badge-used { background-color: #9e9e9e; color: white; }
+.badge-level-0 { background-color: #e0e0e0; color: #666; }
+.badge-level-1 { background-color: #81c784; color: white; }
+.badge-level-2 { background-color: #64b5f6; color: white; }
+.badge-level-3 { background-color: #ffd740; color: #333; }
+.code-display { font-family: monospace; font-weight: bold; color: #007bff; cursor: pointer; }
+.code-display:hover { text-decoration: underline; }
+.pagination { text-align: center; margin-top: 20px; }
+.pagination a { padding: 8px 12px; margin: 0 5px; background-color: #007bff; color: white; text-decoration: none; border-radius: 3px; }
+.pagination a:hover { background-color: #0056b3; }
+.pagination span { padding: 8px 12px; margin: 0 5px; color: #666; }
+.no-codes { text-align: center; padding: 40px; color: #999; font-style: italic; }
+
+/* 统计信息 */
+.stats-section { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 30px; }
+.stat-card { background-color: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); text-align: center; }
+.stat-card .stat-value { font-size: 2.5em; font-weight: bold; color: #667eea; }
+.stat-card .stat-label { color: #666; margin-top: 10px; }
+</style>
+
+<div class="admin-container">
+    <div class="admin-header">
+        <h1>🎟️ 兑换码管理</h1>
+        <div class="nav-links">
+            <a href="{{ url_for('admin_page') }}" class="nav-link">👥 用户管理</a>
+            <a href="{{ url_for('admin_ads_page') }}" class="nav-link">📢 广告管理</a>
+            <a href="{{ url_for('notes_page') }}" class="nav-link">返回笔记</a>
+        </div>
+    </div>
+
+    <!-- 统计信息 -->
+    <div class="stats-section">
+        <div class="stat-card">
+            <div class="stat-value">{{ codes|length }}</div>
+            <div class="stat-label">总兑换码数</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">{{ codes|selectattr('is_used', 'equalto', false)|list|length }}</div>
+            <div class="stat-label">未使用</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">{{ codes|selectattr('is_used', 'equalto', true)|list|length }}</div>
+            <div class="stat-label">已使用</div>
+        </div>
+    </div>
+
+    <!-- 生成兑换码 -->
+    <div class="generate-section">
+        <h3 style="margin-top: 0; color: #333;">🔨 生成新兑换码</h3>
+        <div class="form-grid">
+            <div class="form-group">
+                <label>等级：</label>
+                <select id="generateLevel">
+                    {% for level, config in user_levels.items() %}
+                    <option value="{{ level }}">Lv{{ level }} - {{ config.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label>有效天数：</label>
+                <input type="number" id="generateDays" value="30" min="1" max="3650" />
+            </div>
+            <div class="form-group">
+                <label>生成数量：</label>
+                <input type="number" id="generateCount" value="1" min="1" max="100" />
+            </div>
+            <div class="form-group">
+                <label>备注（可选）：</label>
+                <input type="text" id="generateNotes" placeholder="例如：活动奖励" maxlength="100" />
+            </div>
+        </div>
+        <button class="generate-btn" onclick="generateCodes()">生成兑换码</button>
+        
+        <div id="generatedCodesDiv" class="generated-codes">
+            <h4>✅ 生成成功！请妥善保管以下兑换码：</h4>
+            <div id="codesList" class="codes-list"></div>
+            <button class="copy-all-btn" onclick="copyAllCodes()">复制所有兑换码</button>
+        </div>
+    </div>
+
+    <!-- 兑换码列表 -->
+    <div style="background-color: white; border-radius: 10px; padding: 25px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+        <h3 style="margin-top: 0; color: #333;">📋 兑换码列表</h3>
+        
+        {% if codes %}
+        <div style="overflow-x: auto;">
+        <table class="codes-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>兑换码</th>
+                    <th>等级</th>
+                    <th>有效天数</th>
+                    <th>状态</th>
+                    <th>使用者</th>
+                    <th>创建时间</th>
+                    <th>使用时间</th>
+                    <th>备注</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for code in codes %}
+                <tr>
+                    <td>{{ code.id }}</td>
+                    <td>
+                        <span class="code-display" onclick="copyCode('{{ code.code }}')" title="点击复制">
+                            {{ code.code }}
+                        </span>
+                    </td>
+                    <td>
+                        <span class="badge badge-level-{{ code.level }}">
+                            Lv{{ code.level }} - {{ user_levels[code.level].name }}
+                        </span>
+                    </td>
+                    <td>{{ code.days }}天</td>
+                    <td>
+                        {% if code.is_used %}
+                            <span class="badge badge-used">已使用</span>
+                        {% else %}
+                            <span class="badge badge-unused">未使用</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if code.used_by %}
+                            用户ID: {{ code.used_by }}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                    <td style="font-size: 0.9em; color: #666;">
+                        {{ code.created_at|beijing_time }}
+                    </td>
+                    <td style="font-size: 0.9em; color: #666;">
+                        {% if code.used_at %}
+                            {{ code.used_at|beijing_time }}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                    <td style="font-size: 0.9em; color: #666;">
+                        {{ code.notes or '-' }}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        </div>
+
+        {% if pagination and pagination.pages > 1 %}
+        <div class="pagination">
+            {% if pagination.has_prev %}
+                <a href="{{ url_for('admin_redeem_codes', page=pagination.prev_num) }}">« 上一页</a>
+            {% endif %}
+            <span>第 {{ pagination.page }} 页 / 共 {{ pagination.pages }} 页</span>
+            {% if pagination.has_next %}
+                <a href="{{ url_for('admin_redeem_codes', page=pagination.next_num) }}">下一页 »</a>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        {% else %}
+        <div class="no-codes">暂无兑换码记录</div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+const csrfToken = "{{ csrf_token() }}";
+let generatedCodesData = [];
+
+// 生成兑换码
+async function generateCodes() {
+    const level = parseInt(document.getElementById('generateLevel').value);
+    const days = parseInt(document.getElementById('generateDays').value);
+    const count = parseInt(document.getElementById('generateCount').value);
+    const notes = document.getElementById('generateNotes').value.trim();
+    
+    if (!days || days < 1) {
+        alert('请输入有效的天数！');
+        return;
+    }
+    
+    if (!count || count < 1 || count > 100) {
+        alert('生成数量范围：1-100');
+        return;
+    }
+    
+    if (!confirm(`确定要生成 ${count} 个兑换码吗？\n等级：Lv${level}\n有效期：${days}天`)) {
+        return;
+    }
+    
+    try {
+        const response = await fetch('/admin/generate_codes', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-Token': csrfToken
+            },
+            body: JSON.stringify({ level, days, count, notes })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            generatedCodesData = result.codes;
+            displayGeneratedCodes(result.codes);
+            alert(`✅ 成功生成 ${result.codes.length} 个兑换码！`);
+            
+            // 3秒后刷新页面
+            setTimeout(() => {
+                location.reload();
+            }, 3000);
+        } else {
+            alert('生成失败: ' + (result.error || '未知错误'));
+        }
+    } catch (error) {
+        alert('操作出错: ' + error.message);
+    }
+}
+
+// 显示生成的兑换码
+function displayGeneratedCodes(codes) {
+    const codesListDiv = document.getElementById('codesList');
+    const generatedCodesDiv = document.getElementById('generatedCodesDiv');
+    
+    codesListDiv.innerHTML = codes.map(code => 
+        `<div class="code-item">${code}</div>`
+    ).join('');
+    
+    generatedCodesDiv.style.display = 'block';
+}
+
+// 复制单个兑换码
+function copyCode(code) {
+    navigator.clipboard.writeText(code).then(() => {
+        alert('✅ 兑换码已复制到剪贴板！\n' + code);
+    }).catch(() => {
+        prompt('请手动复制兑换码：', code);
+    });
+}
+
+// 复制所有生成的兑换码
+function copyAllCodes() {
+    const allCodes = generatedCodesData.join('\n');
+    navigator.clipboard.writeText(allCodes).then(() => {
+        alert('✅ 所有兑换码已复制到剪贴板！');
+    }).catch(() => {
+        prompt('请手动复制所有兑换码：', allCodes);
+    });
+}
+</script>
+
+{% endblock %}

@@ -1,0 +1,32 @@
+# Notes Application Dependencies
+# Install: pip install -r requirements.txt
+
+# Flask Core
+Flask==2.3.0
+Werkzeug==2.3.0
+
+# Database
+Flask-SQLAlchemy==3.0.5
+SQLAlchemy==2.0.19
+
+# Authentication
+Flask-Login==0.6.2
+
+# Forms and CSRF
+Flask-WTF==1.1.1
+WTForms==3.0.1
+
+# File Type Detection
+python-magic==0.4.27
+python-magic-bin==0.4.14
+
+# Image Processing (for testing)
+Pillow==10.0.0
+
+# Testing (optional)
+pytest==7.4.0
+pytest-cov==4.1.0
+
+# Development Tools (optional)
+autopep8==2.0.2
+flake8==6.0.0
